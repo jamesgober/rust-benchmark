@@ -3,13 +3,13 @@ name = "benchmark"
 version = "0.1.0"
 edition = "2021"
 authors = ["James Gober <contact@jamesgober.com>"]
-# description = ""
+description = "A high-precision Rust benchmarking library for measuring execution time (microseconds), memory usage, and other performance metrics. Ideal for profiling and optimizing Rust code."
 license = "Apache-2.0"
 repository = "https://github.com/jamesgober/rust-benchmark"
-# keywords = ["benchmark"]
-# categories = []
+keywords = ["benchmark", "performance", "profiling", "timing", "metrics"]
+categories = ["development-tools::profiling", "performance", "benchmarking", "memory-management", "timing"]
 readme = "README.md"
-# documentation = "https://docs.rs/benchmark"
+documentation = "https://docs.rs/benchmark"
 
 
 
