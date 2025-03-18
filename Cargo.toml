@@ -7,7 +7,7 @@ description = "A high-precision Rust benchmarking library for measuring executio
 license = "Apache-2.0"
 repository = "https://github.com/jamesgober/rust-benchmark"
 keywords = ["benchmark", "performance", "profiling", "timing", "metrics"]
-categories = ["development-tools::profiling", "performance", "benchmarking", "memory-management", "timing"]
+categories = ["development-tools::profiling", "benchmark", "memory-management"]
 readme = "README.md"
 documentation = "https://docs.rs/benchmark"
 
