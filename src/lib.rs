@@ -44,19 +44,28 @@
 mod collector;
 mod duration;
 mod measurement;
+#[cfg(all(feature = "std", feature = "metrics"))]
+mod watch;
+#[cfg(all(feature = "std", feature = "metrics"))]
+mod timer;
+
 
 // Public exports
 #[cfg(feature = "std")]
 pub use collector::{Collector, Stats};
 pub use duration::Duration;
 pub use measurement::Measurement;
+#[cfg(all(feature = "std", feature = "metrics"))]
+pub use timer::Timer;
+#[cfg(all(feature = "std", feature = "metrics"))]
+pub use watch::{Watch, WatchStats};
 
 // Re-export macros at crate root
 #[doc(hidden)]
 pub use crate as benchmark;
 
 // Core timing functionality
-#[cfg(feature = "std")]
+#[cfg(all(feature = "std", feature = "enabled"))]
 use std::time::Instant;
 
 /// Measures the execution time of a function.
@@ -210,5 +219,30 @@ macro_rules! time_named {
         let measurement =
             $crate::Measurement { name: $name, duration: $crate::Duration::ZERO, timestamp: 0 };
         ($expr, measurement)
+    }};
+}
+
+/// Stopwatch macro for production metrics collection.
+///
+/// When features `metrics` + `std` are active, this macro creates a `Timer`
+/// which starts immediately before evaluating the body, and records the
+/// duration when dropped at the end of the scope. Body may contain `await`.
+///
+/// Disabled path evaluates body with zero overhead.
+#[cfg(all(feature = "metrics", feature = "std"))]
+#[macro_export]
+macro_rules! stopwatch {
+    ($watch:expr, $name:expr, { $($body:tt)* }) => {{
+        let __timer = $crate::Timer::new($watch.clone(), $name);
+        { $($body)* }
+    }};
+}
+
+/// Disabled version of `stopwatch!` when `metrics` is off.
+#[cfg(not(all(feature = "metrics", feature = "std")))]
+#[macro_export]
+macro_rules! stopwatch {
+    ($watch:expr, $name:expr, { $($body:tt)* }) => {{
+        { $($body)* }
     }};
 }
