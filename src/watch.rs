@@ -78,6 +78,12 @@ impl Watch {
         Self::with_bounds(DEFAULT_LOWEST, DEFAULT_HIGHEST, DEFAULT_SIGFIG)
     }
 
+    /// Create a builder to configure histogram bounds and precision.
+    #[inline]
+    pub fn builder() -> WatchBuilder {
+        WatchBuilder::new()
+    }
+
     /// Create a Watch with custom histogram bounds and precision.
     ///
     /// `lowest_discernible`: smallest value discernible (ns)
@@ -221,5 +227,55 @@ impl Watch {
     pub fn clear_name(&self, name: &str) {
         let mut map = self.inner.hist.write().expect("watch write lock poisoned");
         map.remove(name);
+    }
+}
+
+/// Builder for configuring and constructing a `Watch`.
+#[derive(Debug, Clone, Copy)]
+pub struct WatchBuilder {
+    lowest: u64,
+    highest: u64,
+    sigfig: u8,
+}
+
+impl WatchBuilder {
+    /// Start a builder with default bounds: 1ns..~1h, 3 significant figures.
+    #[inline]
+    pub fn new() -> Self {
+        Self {
+            lowest: DEFAULT_LOWEST,
+            highest: DEFAULT_HIGHEST,
+            sigfig: DEFAULT_SIGFIG,
+        }
+    }
+
+    /// Set the lowest discernible value in nanoseconds (min 1ns).
+    #[inline]
+    pub fn lowest(mut self, ns: u64) -> Self {
+        self.lowest = ns.max(1);
+        self
+    }
+
+    /// Set the highest trackable value in nanoseconds (must be > lowest).
+    #[inline]
+    pub fn highest(mut self, ns: u64) -> Self {
+        self.highest = ns;
+        self
+    }
+
+    /// Set the number of significant figures for histogram (1..=5).
+    #[inline]
+    pub fn sigfig(mut self, sigfig: u8) -> Self {
+        self.sigfig = sigfig.clamp(1, 5);
+        self
+    }
+
+    /// Build the `Watch` with the configured settings.
+    #[inline]
+    pub fn build(self) -> Watch {
+        let lowest = self.lowest.max(1);
+        let highest = self.highest.max(lowest + 1);
+        let sigfig = self.sigfig.clamp(1, 5);
+        Watch::with_bounds(lowest, highest, sigfig)
     }
 }

@@ -10,6 +10,22 @@
 
 ## [Unreleased]
 
+## [0.5.6] - 2025-08-27
+
+### Changed
+- Updated project description to reflect dev, testing, and production use cases.
+- Refined crate description in `Cargo.toml` to emphasize zero-overhead core and optional metrics (Watch/Timer, hdrhistogram).
+- README intro expanded to highlight production observability path.
+
+### Added
+- README "Safety & Edge Cases" section documenting:
+  - Zero-duration behavior, saturating conversions, histogram range clamping.
+  - Drop-safety of `Timer`, defensive handling for empty datasets, overflow protection.
+  - Thread-safety model and feature-gating guidance.
+
+### Maintenance
+- Verified build stability: `cargo fmt --all -- --check`, `cargo clippy`, and full `cargo test` matrix locally.
+
 ### Added
 - Optional feature `metrics` providing production-friendly timing and metrics:
   - `watch.rs`: thread-safe `Watch` backed by `hdrhistogram` for percentile stats
@@ -132,6 +148,7 @@ Initial pre-dev release for backup.
 - `README` file.
 
 [Unreleased]: https://github.com/jamesgober/rust-benchmark/compare/v0.5.0...HEAD
+[0.5.6]: https://github.com/jamesgober/rust-benchmark/compare/v0.5.0...v0.5.6
 [0.8.0]: https://github.com/jamesgober/rust-benchmark/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/jamesgober/rust-benchmark/compare/v0.5.0...v0.7.0
 [0.5.0]: https://github.com/jamesgober/rust-benchmark/compare/v0.2.0...v0.5.0

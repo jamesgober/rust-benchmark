@@ -21,8 +21,12 @@
 </div>
 
 <p>
-    A zero-dependency, high-performance time measurement library for Rust that provides nanosecond precision benchmarking with true zero-overhead when disabled. Designed as a foundational primitive that other libraries can depend on without concern for bloat, version conflicts, or performance impact. This library follows the Unix philosophy of doing one thing well: measuring execution time with minimal overhead and maximum simplicity, making it suitable for embedding in performance-critical base libraries, async applications, and production systems.
-</p>
+    Nanosecond-precision benchmarking for <b>development</b>, <b>testing</b>, and <b>production</b>.
+    The <b>core timing path</b> is <b>zero-overhead</b> when disabled, while optional, std-powered
+    <b>collectors</b> and <b>hdrhistogram-based metrics</b> (<code>Watch</code>/<code>Timer</code> and the
+    <code>stopwatch!</code> macro) provide real <b>service observability</b> with percentiles in production.
+    Designed to be embedded in performance-critical code without bloat or footguns.
+  </p>
 
 <br>
 
@@ -147,6 +151,20 @@ async fn main() {
 <p>
 This repository includes Criterion benchmarks that measure the overhead of the public API compared to a direct <code>Instant::now()</code> baseline.
 </p>
+
+<hr>
+
+<h2>Safety &amp; Edge Cases</h2>
+<ul>
+  <li><b>Zero durations</b>: Some operations can complete so fast that <code>elapsed()</code> may be 0ns on some platforms. The API preserves this and returns <code>Duration::ZERO</code>. If you need a floor for visualization, clamp in your presentation layer.</li>
+  <li><b>Saturating conversions</b>: <code>Watch::record_instant()</code> converts <code>as_nanos()</code> to <code>u64</code> using saturating semantics, avoiding panics on extremely large values.</li>
+  <li><b>Range clamping</b>: <code>Watch::record()</code> clamps input to histogram bounds, ensuring valid recording and protecting against out-of-range values.</li>
+  <li><b>Drop safety</b>: <code>Timer</code> records exactly once. It guards against double-record by storing <code>Option&lt;Instant&gt;</code> and recording on <code>Drop</code> even during unwinding.</li>
+  <li><b>Empty datasets</b>: <code>Watch::snapshot()</code> and <code>Collector</code> handle empty sets defensively. Snapshots for empty histograms return zeros; <code>Collector::stats()</code> returns <code>None</code> for missing keys.</li>
+  <li><b>Overflow protection</b>: <code>Collector</code> uses <code>saturating_add</code> for total accumulation and 128-bit nanosecond storage in <code>Duration</code> to provide ample headroom.</li>
+  <li><b>Thread safety</b>: All shared structures use <code>RwLock</code> with short hold-times: clone under read lock, compute outside the lock. Methods will panic only if a lock is poisoned by a prior panic.</li>
+  <li><b>Feature gating</b>: Production metrics are gated behind <code>features=["std","metrics"]</code>. Disable default features to make all timing a no-op for zero-overhead builds.</li>
+</ul>
 
 <h3>How to run</h3>
 <pre><code>cargo bench

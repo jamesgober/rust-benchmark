@@ -1,9 +1,9 @@
 #╔═══════════════════════════════════════════════════════════╗
 #║                                                           ║
-#║      ▗▄▄▖ ▗▄▄▄▖▗▖  ▗▖ ▗▄▄▖▗▖ ▗▖▗▖  ▗▖ ▗▄▖ ▗▄▄▄▖ ▗▖ ▗▖     ║
-#║      ▐▌ ▐▌▐▌   ▐▛▚▖▐▌▐▌   ▐▌ ▐▌▐▛▚▞▜▌▐▌ ▐▌▐▌  ▐▌▐▌▗▞▘     ║
-#║      ▐▛▀▚▖▐▛▀▀▘▐▌ ▝▜▌▐▌   ▐▛▀▜▌▐▌  ▐▌▐▛▀▜▌▐▛▀▀▚▖▐▛▚▖      ║
-#║      ▐▙▄▞▘▐▙▄▄▖▐▌  ▐▌▝▚▄▄▖▐▌ ▐▌▐▌  ▐▌▐▌ ▐▌▐▌  ▐▌▐▌ ▐▌     ║
+#║     ▗▄▄▖ ▗▄▄▄▖▗▖  ▗▖ ▗▄▄▖▗▖ ▗▖▗▖  ▗▖ ▗▄▄▖ ▗▄▄▄▖ ▗▖ ▗▖     ║
+#║     ▐▌ ▐▌▐▌   ▐▛▚▖▐▌▐▌   ▐▌ ▐▌▐▛▚▞▜▌▐▌  ▐▌▐▌  ▐▌▐▌▗▞▘     ║
+#║     ▐▛▀▚▖▐▛▀▀▘▐▌ ▝▜▌▐▌   ▐▛▀▜▌▐▌  ▐▌▐▛▀▀▜▌▐▛▀▀▚▖▐▛▚▖      ║
+#║     ▐▙▄▞▘▐▙▄▄▖▐▌  ▐▌▝▚▄▄▖▐▌ ▐▌▐▌  ▐▌▐▌  ▐▌▐▌  ▐▌▐▌ ▐▌     ║
 #║                                                           ║
 #╠═══════════╦══════════════════════════════════╦════════════╣
 #║ BENCHMARK ┇ PERFORMANCE BENCHMARKING LIBRARY ┇ RUST BUILT ║
@@ -22,7 +22,7 @@ repository    = "https://github.com/jamesgober/rust-benchmark"
 documentation = "https://docs.rs/benchmark"
 
 # Description
-description = "A high-precision Rust benchmarking library for measuring execution time (microseconds), memory usage, and other performance metrics. Ideal for profiling and optimizing Rust code."
+description = "Nanosecond-precision benchmarking for dev, testing, and production. Zero-overhead core timing when disabled; optional std-powered collectors and hdrhistogram-based metrics (Watch/Timer) for real service observability."
 
 # Keywords (5 total)
 keywords = [
@@ -50,12 +50,16 @@ authors = [
 #║ ⚙️ FEATURES
 #╚═══════════════════════════════════════════════════════════╝
 [features]
-default = ["std", "enabled"] # Default features (includes std and enabled)
-enabled = []                 # Benchmarking enabled (can be disabled for true zero-overhead)
-std     = []                 # Use the Rust standard library (disables no_std)
-full    = ["std", "enabled"] # Full build with all features enabled
-minimal = []                 # Minimal build with core timing only (no default features)
-metrics = ["dep:hdrhistogram", "std"] # Optional production metrics (Watch/Timer), keeps zero-deps by default
+enabled  = [] # Benchmarking enabled (can be disabled for true zero-overhead).
+std      = [] # Use the Rust standard library (disables no_std).
+
+# Feature Combinations
+minimal  = [] # Minimal build with core timing only (no default features).
+default  = ["std", "enabled"] # Default features (includes std and enabled).
+metrics  = ["dep:hdrhistogram", "std"] # Optional production metrics (Watch/Timer), keeps zero-deps by default.
+full     = ["dep:hdrhistogram", "std", "enabled"] # Full build with all features enabled.
+base     = ["dep:hdrhistogram", "std", "enabled"] # Base build with standard features enabled.
+none     = [] # No Features.
 
 
 

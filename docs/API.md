@@ -31,6 +31,7 @@
   - [stopwatch!](#stopwatch)
 - [Async Usage](#async-usage)
 - [Disabled Mode Behavior](#disabled-mode-behavior)
+  - [Best Practices: Handling 0ns in dashboards](#best-practices-handling-0ns-in-dashboards)
 
 <br><br>
 
@@ -296,7 +297,7 @@ let s = &stats["db.query"];
 assert!(s.p99 >= s.p50);
 ```
 
-- Methods: `new()`, `with_bounds(lowest, highest, sigfig)`, `record(name, ns)`, `record_instant(name, start)`, `snapshot()`, `clear()`, `clear_name(name)`
+- Methods: `new()`, `builder() -> WatchBuilder`, `with_bounds(lowest, highest, sigfig)`, `record(name, ns)`, `record_instant(name, start)`, `snapshot()`, `clear()`, `clear_name(name)`
 - Concurrency: `Watch` is cheap to clone and `Send + Sync`.
 
 ### Timer
@@ -449,8 +450,12 @@ Set bounds to your SLOs to reduce memory and improve precision.
 ```rust
 use benchmark::Watch;
 
-// 100ns to 10s with 3 significant figures
-let watch = Watch::with_bounds(100, 10_000_000_000, 3);
+// Builder: 100ns to 10s with 3 significant figures
+let watch = Watch::builder()
+    .lowest(100)
+    .highest(10_000_000_000)
+    .sigfig(3)
+    .build();
 watch.record("op", 250);
 ```
 
@@ -503,6 +508,12 @@ When compiled with `default-features = false` or without `enabled`:
 - `time!` returns `(result, Duration::ZERO)`.
 - `time_named!` returns `(result, Measurement::zero(name))`.
 - `Collector` and `Stats` are `std`-gated; if `std` is disabled they are not available.
+
+### Best Practices: Handling 0ns in dashboards
+- Preserve fidelity in the data layer: zero durations are valid measurements for extremely fast operations.
+- Apply a visualization floor at presentation time only if necessary (e.g., show 1ns instead of 0ns) to avoid skewing aggregates.
+- Consider filtering 0ns when computing percentiles for SLO charts if they represent measurement granularity rather than business latency.
+- If you need to avoid zeros in histograms, clamp on export, not at collection: `max(value, 1)`. Keep raw storage exact for audits.
 
 <br>
 

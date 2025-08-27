@@ -57,7 +57,7 @@ pub use measurement::Measurement;
 #[cfg(all(feature = "std", feature = "metrics"))]
 pub use timer::Timer;
 #[cfg(all(feature = "std", feature = "metrics"))]
-pub use watch::{Watch, WatchStats};
+pub use watch::{Watch, WatchBuilder, WatchStats};
 
 // Re-export macros at crate root
 #[doc(hidden)]
