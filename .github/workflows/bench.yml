@@ -1,0 +1,33 @@
+name: Benchmarks (manual, nightly)
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    - cron: "0 6 * * 1"
+
+jobs:
+  bench:
+    name: cargo bench (nightly)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust (nightly)
+        uses: dtolnay/rust-toolchain@nightly
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+
+      - name: Show toolchain
+        run: |
+          rustc -V
+          cargo -V
+
+      - name: Run benches
+        env:
+          RUSTFLAGS: "-C target-cpu=native"
+        run: |
+          cargo bench --features "std enabled"
