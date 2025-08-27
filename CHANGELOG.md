@@ -11,6 +11,10 @@
 ## [Unreleased]
 
 
+
+
+
+
 <br>
 
 ## [0.5.0] - 2025-08-27
@@ -116,8 +120,9 @@ Initial pre-dev release for backup.
 - `VERSION` file.
 - `README` file.
 
-[Unreleased]: https://github.com/jamesgober/rust-benchmark/compare/v0.2.0...HEAD
-[0.5.0]: https://github.com/jamesgober/rust-benchmark/compare/v0.2.0...v0.5.0
+[Unreleased]: https://github.com/jamesgober/rust-benchmark/compare/v0.5.0...HEAD
+[0.8.0]: https://github.com/jamesgober/rust-benchmark/compare/v0.7.0...v0.8.0
+[0.7.0]: https://github.com/jamesgober/rust-benchmark/compare/v0.5.0...v0.7.0
 [0.5.0]: https://github.com/jamesgober/rust-benchmark/compare/v0.2.0...v0.5.0
 [0.2.0]: https://github.com/jamesgober/rust-benchmark/compare/v0.1.5...v0.2.0
 [0.1.5]: https://github.com/jamesgober/rust-benchmark/compare/v0.1.0...v0.1.5
