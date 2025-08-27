@@ -29,6 +29,12 @@ fn test_time_macro() {
     let (result, duration) = time!(2 + 2);
     assert_eq!(result, 4);
 
+    #[cfg(feature = "enabled")]
+    {
+        // Touch duration so it's used under enabled without triggering lints
+        let _ = duration.as_nanos();
+    }
+
     #[cfg(not(feature = "enabled"))]
     assert_eq!(duration.as_nanos(), 0);
 }

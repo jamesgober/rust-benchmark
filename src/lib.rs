@@ -123,10 +123,15 @@ pub fn measure<T, F: FnOnce() -> T>(f: F) -> (T, Duration) {
 #[cfg(all(feature = "std", feature = "enabled"))]
 #[inline]
 pub fn measure_named<T, F: FnOnce() -> T>(name: &'static str, f: F) -> (T, Measurement) {
-    let timestamp = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap()
-        .as_nanos();
+    // Avoid unsupported syscalls under Miri isolation
+    let timestamp = if cfg!(miri) {
+        0
+    } else {
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    };
 
     let start = Instant::now();
     let result = f();

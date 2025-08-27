@@ -73,20 +73,10 @@ jobs:
       fail-fast: false
       matrix:
         features:
-          - ""
-          - "benchmarking"
-          - "async-runtime"
-          - "statistics"
-          - "export-json"
-          - "comparative"
-          - "regression-detection"
-          - "compression"
-          - "health-checks"
-          - "minimal"
-          - "full"
-          - "benchmarking,async-runtime"
-          - "benchmarking,statistics,export-json"
-          - "benchmarking,comparative,regression-detection"
+          - ""               # no default features (no_std build)
+          - "minimal"        # minimal feature
+          - "std"            # std only
+          - "full"           # std + enabled
 
     steps:
       - name: Checkout code
@@ -292,7 +282,7 @@ jobs:
         run: cargo check --lib --no-default-features
 
       - name: Check MSRV compatibility (lib only, minimal features)
-        run: cargo check --lib --no-default-features --features "benchmarking"
+        run: cargo check --lib --no-default-features --features "minimal"
 
       - name: Check MSRV compatibility (standard features)
-        run: cargo check --lib --features "benchmarking,export-json,statistics"
+        run: cargo check --lib --features "full"
