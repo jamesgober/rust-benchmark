@@ -64,7 +64,10 @@ pub struct WatchStats {
 impl fmt::Debug for Watch {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Watch")
-            .field("metrics_len", &self.inner.hist.read().map(|m| m.len()).unwrap_or(0))
+            .field(
+                "metrics_len",
+                &self.inner.hist.read().map(|m| m.len()).unwrap_or(0),
+            )
             .finish()
     }
 }
@@ -121,8 +124,12 @@ impl Watch {
         // Slow path: create or update under write lock.
         let mut map = self.inner.hist.write().expect("watch write lock poisoned");
         let entry = map.entry(name.to_string()).or_insert_with(|| {
-            Histogram::<u64>::new_with_bounds(self.inner.lowest, self.inner.highest, self.inner.sigfig)
-                .expect("valid histogram bounds")
+            Histogram::<u64>::new_with_bounds(
+                self.inner.lowest,
+                self.inner.highest,
+                self.inner.sigfig,
+            )
+            .expect("valid histogram bounds")
         });
         let _ = entry.record(ns);
     }

@@ -32,12 +32,16 @@ pub struct Collector {
 impl Collector {
     /// Creates a new collector.
     pub fn new() -> Self {
-        Self { measurements: Arc::new(RwLock::new(HashMap::new())) }
+        Self {
+            measurements: Arc::new(RwLock::new(HashMap::new())),
+        }
     }
 
     /// Creates a new collector with pre-allocated capacity.
     pub fn with_capacity(capacity: usize) -> Self {
-        Self { measurements: Arc::new(RwLock::new(HashMap::with_capacity(capacity))) }
+        Self {
+            measurements: Arc::new(RwLock::new(HashMap::with_capacity(capacity))),
+        }
     }
 
     /// Records a measurement.
@@ -99,7 +103,13 @@ impl Collector {
 
         let count = durations.len() as u64;
         let mean = Duration::from_nanos(total / u128::from(count));
-        Some(Stats { count, total: Duration::from_nanos(total), min, max, mean })
+        Some(Stats {
+            count,
+            total: Duration::from_nanos(total),
+            min,
+            max,
+            mean,
+        })
     }
 
     /// Gets statistics for all measurements.
@@ -142,7 +152,13 @@ impl Collector {
                 let mean = Duration::from_nanos(total / u128::from(count));
                 out.push((
                     name.to_string(),
-                    Stats { count, total: Duration::from_nanos(total), min, max, mean },
+                    Stats {
+                        count,
+                        total: Duration::from_nanos(total),
+                        min,
+                        max,
+                        mean,
+                    },
                 ));
             }
         }

@@ -28,7 +28,11 @@ impl Timer {
     /// Start a new timer for the given metric name, recording into `watch`.
     #[inline]
     pub fn new(watch: Watch, name: impl Into<Arc<str>>) -> Self {
-        Self { watch, name: name.into(), start: Some(Instant::now()) }
+        Self {
+            watch,
+            name: name.into(),
+            start: Some(Instant::now()),
+        }
     }
 
     /// Stop the timer early and record the duration once.

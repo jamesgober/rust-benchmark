@@ -18,12 +18,20 @@ pub struct Measurement {
 impl Measurement {
     /// Creates a new measurement.
     pub fn new(name: &'static str, duration: Duration, timestamp: u128) -> Self {
-        Self { name, duration, timestamp }
+        Self {
+            name,
+            duration,
+            timestamp,
+        }
     }
 
     /// Creates a new measurement with zero duration and timestamp.
     pub fn zero(name: &'static str) -> Self {
-        Self { name, duration: Duration::ZERO, timestamp: 0 }
+        Self {
+            name,
+            duration: Duration::ZERO,
+            timestamp: 0,
+        }
     }
 }
 

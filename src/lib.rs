@@ -45,10 +45,9 @@ mod collector;
 mod duration;
 mod measurement;
 #[cfg(all(feature = "std", feature = "metrics"))]
-mod watch;
-#[cfg(all(feature = "std", feature = "metrics"))]
 mod timer;
-
+#[cfg(all(feature = "std", feature = "metrics"))]
+mod watch;
 
 // Public exports
 #[cfg(feature = "std")]
@@ -132,7 +131,11 @@ pub fn measure_named<T, F: FnOnce() -> T>(name: &'static str, f: F) -> (T, Measu
     let result = f();
     let duration = Duration::from_nanos(start.elapsed().as_nanos());
 
-    let measurement = Measurement { name, duration, timestamp };
+    let measurement = Measurement {
+        name,
+        duration,
+        timestamp,
+    };
 
     (result, measurement)
 }
@@ -141,7 +144,11 @@ pub fn measure_named<T, F: FnOnce() -> T>(name: &'static str, f: F) -> (T, Measu
 #[cfg(not(feature = "enabled"))]
 #[inline]
 pub fn measure_named<T, F: FnOnce() -> T>(name: &'static str, f: F) -> (T, Measurement) {
-    let measurement = Measurement { name, duration: Duration::ZERO, timestamp: 0 };
+    let measurement = Measurement {
+        name,
+        duration: Duration::ZERO,
+        timestamp: 0,
+    };
     (f(), measurement)
 }
 
@@ -206,7 +213,11 @@ macro_rules! time_named {
         let __ts = ::std::time::SystemTime::now()
             .duration_since(::std::time::UNIX_EPOCH)
             .map_or(0, |d| d.as_nanos());
-        let __measurement = $crate::Measurement { name: __name, duration: __dur, timestamp: __ts };
+        let __measurement = $crate::Measurement {
+            name: __name,
+            duration: __dur,
+            timestamp: __ts,
+        };
         (__out, __measurement)
     }};
 }
@@ -216,8 +227,11 @@ macro_rules! time_named {
 #[macro_export]
 macro_rules! time_named {
     ($name:expr, $expr:expr) => {{
-        let measurement =
-            $crate::Measurement { name: $name, duration: $crate::Duration::ZERO, timestamp: 0 };
+        let measurement = $crate::Measurement {
+            name: $name,
+            duration: $crate::Duration::ZERO,
+            timestamp: 0,
+        };
         ($expr, measurement)
     }};
 }
