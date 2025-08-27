@@ -26,7 +26,7 @@ fn test_basic_timing() {
 
 #[test]
 fn test_time_macro() {
-    let (result, _duration) = time!(2 + 2);
+    let (result, duration) = time!(2 + 2);
     assert_eq!(result, 4);
 
     #[cfg(not(feature = "enabled"))]

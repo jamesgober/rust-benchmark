@@ -10,8 +10,11 @@
 </h1>
 <div align="center">
     <a href="https://crates.io/crates/benchmark"><img alt="Crates.io" src="https://img.shields.io/crates/v/benchmark"></a>
-    <img alt="GitHub" src="https://img.shields.io/github/license/jamesgober/rust-benchmark">
+    <span>&nbsp;</span>
+    <a href="https://crates.io/crates/benchmark" alt="Download benchmark"><img alt="Crates.io Downloads" src="https://img.shields.io/crates/d/benchmark?color=%230099ff"></a>
+    <span>&nbsp;</span>
      <a href="https://docs.rs/benchmark" title="Benchmark Documentation"><img alt="docs.rs" src="https://img.shields.io/docsrs/benchmark"></a>
+    <span>&nbsp;</span>
     <a href="https://github.com/jamesgober/rust-benchmark/actions"><img alt="GitHub CI" src="https://github.com/jamesgober/rust-benchmark/actions/workflows/ci.yml/badge.svg"></a>
 </div>
 
