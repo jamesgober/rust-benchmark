@@ -10,6 +10,11 @@
 
 ## [Unreleased]
 
+
+<br>
+
+## [0.5.0] - 2025-08-27
+
 ### Added
 - Trybuild compile tests for disabled mode to assert API compiles in zero-overhead configuration:
   - `tests/trybuild_disabled.rs`
@@ -46,6 +51,12 @@
    - Clone under read lock, compute outside lock to reduce lock hold time and improve concurrency
    - Avoid nested locking in `all_stats()` by snapshotting data first
 
+
+<br>
+
+
+## [0.2.0] - 2025-08-27
+
 ### Added
 - `collector.rs` file.
 - `duration.rs` file.
@@ -70,7 +81,9 @@
 - Resolved Clippy lints by adding targeted `#[allow(clippy::cast_precision_loss)]` and modernizing format strings; `#![deny(clippy::all)]` remains clean across all targets/features.
 - Ensured `no_std` test stability by gating `test_duration_display` behind the `std` feature.
 
+
 <br>
+
 
 ## [0.1.5] - 2025-08-26
 
