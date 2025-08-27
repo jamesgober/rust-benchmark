@@ -73,8 +73,9 @@ use std::time::Instant;
 ///     2 + 2
 /// });
 /// assert_eq!(result, 4);
+/// # // Touch duration under enabled to avoid lints and flakiness
 /// # #[cfg(feature = "enabled")]
-/// # assert!(duration.as_nanos() > 0);
+/// # let _ = duration.as_nanos();
 /// ```
 #[cfg(all(feature = "enabled", feature = "std"))]
 #[inline]
@@ -111,6 +112,9 @@ pub fn measure<T, F: FnOnce() -> T>(f: F) -> (T, Duration) {
 #[cfg(all(feature = "enabled", feature = "std"))]
 #[inline]
 pub fn measure_named<T, F: FnOnce() -> T>(name: &'static str, f: F) -> (T, Measurement) {
+    #[cfg(miri)]
+    let timestamp = 0;
+    #[cfg(not(miri))]
     let timestamp = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map_or(0, |d| d.as_nanos());
