@@ -10,6 +10,10 @@
 
 ## [Unreleased]
 
+
+
+<br>
+
 ## [0.5.6] - 2025-08-27
 
 ### Changed
@@ -148,6 +152,7 @@ Initial pre-dev release for backup.
 - `README` file.
 
 [Unreleased]: https://github.com/jamesgober/rust-benchmark/compare/v0.5.0...HEAD
+[0.6.0]: https://github.com/jamesgober/rust-benchmark/compare/v0.5.6...v0.6.0
 [0.5.6]: https://github.com/jamesgober/rust-benchmark/compare/v0.5.0...v0.5.6
 [0.8.0]: https://github.com/jamesgober/rust-benchmark/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/jamesgober/rust-benchmark/compare/v0.5.0...v0.7.0

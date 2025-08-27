@@ -238,6 +238,13 @@ pub struct WatchBuilder {
     sigfig: u8,
 }
 
+impl Default for WatchBuilder {
+    #[inline]
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl WatchBuilder {
     /// Start a builder with default bounds: 1ns..~1h, 3 significant figures.
     #[inline]
@@ -251,6 +258,7 @@ impl WatchBuilder {
 
     /// Set the lowest discernible value in nanoseconds (min 1ns).
     #[inline]
+    #[must_use]
     pub fn lowest(mut self, ns: u64) -> Self {
         self.lowest = ns.max(1);
         self
@@ -258,6 +266,7 @@ impl WatchBuilder {
 
     /// Set the highest trackable value in nanoseconds (must be > lowest).
     #[inline]
+    #[must_use]
     pub fn highest(mut self, ns: u64) -> Self {
         self.highest = ns;
         self
@@ -265,6 +274,7 @@ impl WatchBuilder {
 
     /// Set the number of significant figures for histogram (1..=5).
     #[inline]
+    #[must_use]
     pub fn sigfig(mut self, sigfig: u8) -> Self {
         self.sigfig = sigfig.clamp(1, 5);
         self
