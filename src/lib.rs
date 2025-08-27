@@ -8,6 +8,7 @@
 #![warn(missing_docs)]
 #![warn(missing_debug_implementations)]
 
+#[cfg(feature = "std")]
 use std::time::Instant;
 
 /// A duration represented in nanoseconds.
@@ -90,7 +91,7 @@ pub struct Stats {
 /// assert_eq!(result, 42);
 /// assert!(duration.as_nanos() > 0);
 /// ```
-#[cfg(feature = "enabled")]
+#[cfg(all(feature = "std", feature = "enabled"))]
 #[inline]
 pub fn measure<T, F: FnOnce() -> T>(f: F) -> (T, Duration) {
     let start = Instant::now();
@@ -100,7 +101,7 @@ pub fn measure<T, F: FnOnce() -> T>(f: F) -> (T, Duration) {
 }
 
 /// Measures the execution time of a function (disabled version).
-#[cfg(not(feature = "enabled"))]
+#[cfg(not(all(feature = "std", feature = "enabled")))]
 #[inline(always)]
 pub fn measure<T, F: FnOnce() -> T>(f: F) -> (T, Duration) {
     (f(), Duration::ZERO)
@@ -119,29 +120,28 @@ pub fn measure<T, F: FnOnce() -> T>(f: F) -> (T, Duration) {
 /// assert_eq!(result, 42);
 /// assert_eq!(measurement.name, "computation");
 /// ```
-#[cfg(feature = "enabled")]
+#[cfg(all(feature = "std", feature = "enabled"))]
 #[inline]
 pub fn measure_named<T, F: FnOnce() -> T>(name: &'static str, f: F) -> (T, Measurement) {
     let timestamp = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap()
         .as_nanos();
-    
+
     let start = Instant::now();
     let result = f();
     let duration = Duration::from_nanos(start.elapsed().as_nanos());
-    
+
     let measurement = Measurement {
         name,
         duration,
         timestamp,
     };
-    
+
     (result, measurement)
 }
 
-/// Measures the execution time of a function with a name (disabled version).
-#[cfg(not(feature = "enabled"))]
+#[cfg(not(all(feature = "std", feature = "enabled")))]
 #[inline(always)]
 pub fn measure_named<T, F: FnOnce() -> T>(name: &'static str, f: F) -> (T, Measurement) {
     let measurement = Measurement {
@@ -193,15 +193,19 @@ macro_rules! time_named {
     }};
 }
 
+#[cfg(feature = "std")]
 use std::collections::HashMap;
+#[cfg(feature = "std")]
 use std::sync::{Arc, RwLock};
 
 /// A thread-safe collector for measurements.
+#[cfg(feature = "std")]
 #[derive(Clone, Debug)]
 pub struct Collector {
     measurements: Arc<RwLock<HashMap<&'static str, Vec<Duration>>>>,
 }
 
+#[cfg(feature = "std")]
 impl Collector {
     /// Creates a new collector.
     pub fn new() -> Self {
@@ -222,7 +226,7 @@ impl Collector {
     pub fn stats(&self, name: &str) -> Option<Stats> {
         let lock = self.measurements.read().unwrap();
         let durations = lock.get(name)?;
-        
+
         if durations.is_empty() {
             return None;
         }
@@ -246,20 +250,19 @@ impl Collector {
     pub fn all_stats(&self) -> Vec<(String, Stats)> {
         let lock = self.measurements.read().unwrap();
         lock.keys()
-            .filter_map(|&name| {
-                self.stats(name).map(|stats| (name.to_string(), stats))
-            })
+            .filter_map(|&name| self.stats(name).map(|stats| (name.to_string(), stats)))
             .collect()
     }
 }
 
+#[cfg(feature = "std")]
 impl Default for Collector {
     fn default() -> Self {
         Self::new()
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "std"))]
 mod tests {
     use super::*;
 
@@ -290,7 +293,7 @@ mod tests {
             duration: Duration::from_nanos(1000),
             timestamp: 0,
         };
-        
+
         collector.record(measurement.clone());
         collector.record(Measurement {
             name: "test",
