@@ -140,8 +140,7 @@ pub fn measure_named<T, F: FnOnce() -> T>(name: &'static str, f: F) -> (T, Measu
 
 /// Times an expression and returns (result, duration).
 ///
-/// When features `enabled` + `std` are active, the macro inlines timing using
-/// `std::time::Instant` so it can be used inside async contexts (supports `await`).
+/// This is a convenience macro that wraps the `measure` function.
 ///
 /// # Examples
 /// ```
@@ -150,14 +149,11 @@ pub fn measure_named<T, F: FnOnce() -> T>(name: &'static str, f: F) -> (T, Measu
 /// let (result, duration) = time!(2 + 2);
 /// assert_eq!(result, 4);
 /// ```
-#[cfg(all(feature = "enabled", feature = "std"))]
+#[cfg(feature = "enabled")]
 #[macro_export]
 macro_rules! time {
     ($expr:expr) => {{
-        let __start = ::std::time::Instant::now();
-        let __out = { $expr };
-        let __dur = $crate::Duration::from_nanos(__start.elapsed().as_nanos());
-        (__out, __dur)
+        $crate::measure(|| $expr)
     }};
 }
 
@@ -172,8 +168,7 @@ macro_rules! time {
 
 /// Times an expression with a name and returns (result, measurement).
 ///
-/// When features `enabled` + `std` are active, the macro inlines timing using
-/// `std::time::Instant` so it can be used inside async contexts (supports `await`).
+/// This is a convenience macro that wraps the `measure_named` function.
 ///
 /// # Examples
 /// ```
@@ -183,22 +178,11 @@ macro_rules! time {
 /// assert_eq!(result, 4);
 /// assert_eq!(measurement.name, "addition");
 /// ```
-#[cfg(all(feature = "enabled", feature = "std"))]
+#[cfg(feature = "enabled")]
 #[macro_export]
 macro_rules! time_named {
     ($name:expr, $expr:expr) => {{
-        let __name: &'static str = $name;
-        let __start = ::std::time::Instant::now();
-        let __out = { $expr };
-        let __dur = $crate::Duration::from_nanos(__start.elapsed().as_nanos());
-        #[cfg(miri)]
-        let __ts = 0;
-        #[cfg(not(miri))]
-        let __ts = ::std::time::SystemTime::now()
-            .duration_since(::std::time::UNIX_EPOCH)
-            .map_or(0, |d| d.as_nanos());
-        let __measurement = $crate::Measurement { name: __name, duration: __dur, timestamp: __ts };
-        (__out, __measurement)
+        $crate::measure_named($name, || $expr)
     }};
 }
 

@@ -70,35 +70,19 @@ impl Collector {
     ///
     /// Panics if the lock is poisoned.
     pub fn stats(&self, name: &str) -> Option<Stats> {
-        // Clone the vector under a read lock to minimize lock hold time, then compute outside the lock
-        let durations: Vec<Duration> = {
-            let lock = self.measurements.read().unwrap();
-            lock.get(name)?.clone()
-        };
+        let lock = self.measurements.read().unwrap();
+        let durations = lock.get(name)?;
 
         if durations.is_empty() {
             return None;
         }
 
-        // Single pass: compute total, min, max
-        let mut iter = durations.iter().copied();
-        let first = iter.next()?;
-        let mut total: u128 = first.as_nanos();
-        let mut min = first;
-        let mut max = first;
-        for d in iter {
-            let n = d.as_nanos();
-            total = total.saturating_add(n);
-            if d < min {
-                min = d;
-            }
-            if d > max {
-                max = d;
-            }
-        }
-
         let count = durations.len() as u64;
+        let total: u128 = durations.iter().map(Duration::as_nanos).sum();
+        let min = durations.iter().min().copied().unwrap_or(Duration::ZERO);
+        let max = durations.iter().max().copied().unwrap_or(Duration::ZERO);
         let mean = Duration::from_nanos(total / u128::from(count));
+
         Some(Stats { count, total: Duration::from_nanos(total), min, max, mean })
     }
 
@@ -110,43 +94,10 @@ impl Collector {
     ///
     /// Panics if the lock is poisoned.
     pub fn all_stats(&self) -> Vec<(String, Stats)> {
-        // Snapshot names and their vectors under a read lock, then compute outside to avoid nested locking
-        let snapshot: Vec<(&'static str, Vec<Duration>)> = {
-            let lock = self.measurements.read().unwrap();
-            lock.iter().map(|(&name, v)| (name, v.clone())).collect()
-        };
-
-        let mut out = Vec::with_capacity(snapshot.len());
-        for (name, durations) in snapshot {
-            if durations.is_empty() {
-                continue;
-            }
-
-            // Single pass per key
-            let mut iter = durations.iter().copied();
-            if let Some(first) = iter.next() {
-                let mut total: u128 = first.as_nanos();
-                let mut min = first;
-                let mut max = first;
-                for d in iter {
-                    let n = d.as_nanos();
-                    total = total.saturating_add(n);
-                    if d < min {
-                        min = d;
-                    }
-                    if d > max {
-                        max = d;
-                    }
-                }
-                let count = durations.len() as u64;
-                let mean = Duration::from_nanos(total / u128::from(count));
-                out.push((
-                    name.to_string(),
-                    Stats { count, total: Duration::from_nanos(total), min, max, mean },
-                ));
-            }
-        }
-        out
+        let lock = self.measurements.read().unwrap();
+        lock.keys()
+            .filter_map(|&name| self.stats(name).map(|stats| (name.to_string(), stats)))
+            .collect()
     }
 
     /// Clears all measurements.

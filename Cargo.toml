@@ -37,15 +37,3 @@ full = ["std", "enabled"]  # Full build with all features enabled
 
 
 [dependencies]
-
-[dev-dependencies]
-criterion = "0.5"
-tokio = { version = "1", features = ["macros", "rt-multi-thread", "time"] }
-
-[[bench]]
-name = "overhead"
-harness = false
-
-[[bench]]
-name = "stats"
-harness = false

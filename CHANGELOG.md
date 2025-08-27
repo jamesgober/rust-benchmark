@@ -10,30 +10,9 @@
 
 ## [Unreleased]
 
-### Added
-- Criterion benchmarks for overhead analysis:
-  - Bench file: `benches/overhead.rs`
-  - Compares `Instant::now()` vs `measure` vs `time!`
-- Cargo configuration updates:
-  - `[dev-dependencies] criterion = "0.5"`
-  - `[[bench]] name = "overhead"`, `harness = false`
-- Criterion benchmarks for statistics aggregation:
-  - Bench file: `benches/stats.rs`
-  - Benchmarks `Collector::stats()` and `Collector::all_stats()` across varying sizes
-- Array baseline aggregation benchmark (no locks) to compare overhead:
-  - Added `stats::array` group in `benches/stats.rs`
-- Async tests for macros and collector:
-  - `tests/macro_tests.rs` adds async coverage for `time!` and `time_named!`
-  - `tests/collector_async.rs` verifies collector with Tokio tasks
-- CI: Scheduled (weekly) and manual benchmarks workflow:
-  - `.github/workflows/bench.yml` runs `cargo bench` on nightly with `RUSTFLAGS=-C target-cpu=native`
+<br>
 
-### Changed
-- `time!` and `time_named!` macros now inline timing under `features = ["std", "enabled"]` to support `await` inside macro bodies (async-friendly), preserving disabled zero-cost variants.
- - Performance: optimized `Collector::stats()` and `Collector::all_stats()`
-   - Single-pass computation of total/min/max to reduce iterations
-   - Clone under read lock, compute outside lock to reduce lock hold time and improve concurrency
-   - Avoid nested locking in `all_stats()` by snapshotting data first
+## [0.2.0] - 2025-08-27
 
 ### Added
 - `collector.rs` file.
@@ -93,7 +72,7 @@ Initial pre-dev release for backup.
 - `README` file.
 
 [Unreleased]: https://github.com/jamesgober/rust-benchmark/compare/v0.2.0...HEAD
-[0.5.0]: https://github.com/jamesgober/rust-benchmark/compare/v0.2.0...v0.5.0
+[0.3.0]: https://github.com/jamesgober/rust-benchmark/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/jamesgober/rust-benchmark/compare/v0.1.5...v0.2.0
 [0.1.5]: https://github.com/jamesgober/rust-benchmark/compare/v0.1.0...v0.1.5
 [0.1.0]: https://github.com/jamesgober/rust-benchmark/releases/tag/v0.1.0
