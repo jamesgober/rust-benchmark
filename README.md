@@ -45,14 +45,14 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-benchmark = "0.1.5"
+benchmark = "0.2.0"
 ```
 
 #### Disable Default Features
 ```toml
 [dependencies]
 # Disable default features for true zero-overhead
-benchmark = { version = "0.1.5", default-features = false }
+benchmark = { version = "0.2.0", default-features = false }
 ```
 
 

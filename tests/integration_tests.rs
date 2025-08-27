@@ -56,7 +56,7 @@ fn test_collector_thread_safety() {
                     duration: Duration::from_nanos((i * 10 + j) as u128),
                     timestamp: 0,
                 };
-                c.record(measurement);
+                c.record(&measurement);
             }
         });
         handles.push(handle);

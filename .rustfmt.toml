@@ -1,0 +1,48 @@
+# Rust formatting configuration
+
+# Version
+required_version = "1.7.0"
+
+# Line length
+max_width = 100
+hard_tabs = false
+tab_spaces = 4
+
+# Comments
+comment_width = 80
+wrap_comments = true
+
+# Imports
+imports_granularity = "Module"
+imports_layout = "Vertical"
+group_imports = "StdExternalCrate"
+reorder_imports = true
+reorder_modules = true
+
+# Functions
+fn_params_layout = "Tall"
+fn_call_width = 80
+
+# Structs
+struct_field_align_threshold = 20
+struct_lit_width = 80
+
+# Enums
+enum_discrim_align_threshold = 20
+
+# Impl
+impl_empty_single_line = true
+
+# Misc
+use_field_init_shorthand = true
+use_try_shorthand = true
+format_code_in_doc_comments = true
+normalize_comments = true
+normalize_doc_attributes = true
+report_todo = "Always"
+report_fixme = "Always"
+
+# Stability
+format_strings = false
+format_macro_matchers = false
+format_macro_bodies = true
