@@ -1,16 +1,37 @@
 [package]
 name = "benchmark"
-version = "0.1.0"
+version = "0.1.5"
 edition = "2021"
-authors = ["James Gober <contact@jamesgober.com>"]
-description = "A high-precision Rust benchmarking library for measuring execution time (microseconds), memory usage, and other performance metrics. Ideal for profiling and optimizing Rust code."
 license = "Apache-2.0"
-repository = "https://github.com/jamesgober/rust-benchmark"
-keywords = ["benchmark", "performance", "profiling", "timing", "metrics"]
-categories = ["development-tools::profiling", "memory-management"]
 readme = "README.md"
-documentation = "https://docs.rs/benchmark"
 
+authors = [
+    "James Gober <code@jamesgober.dev>"
+]
+
+description = "A high-precision Rust benchmarking library for measuring execution time (microseconds), memory usage, and other performance metrics. Ideal for profiling and optimizing Rust code."
+keywords = [
+    "benchmark", 
+    "performance", 
+    "profiling", 
+    "timing", 
+    "metrics"
+]
+
+categories = [
+    "development-tools::profiling", 
+    "memory-management"
+]
+
+documentation = "https://docs.rs/benchmark"
+repository = "https://github.com/jamesgober/rust-benchmark"
+homepage = "https://github.com/jamesgober/rust-benchmark"
+
+
+[features]
+default = ["std", "enabled"]
+enabled = []  # Benchmarking enabled (can be disabled for true zero-overhead)
+std = []      # Use the Rust standard library (disables no_std)
 
 
 [dependencies]
