@@ -10,6 +10,17 @@
 
 ## [Unreleased]
 
+### Added
+- Optional feature `metrics` providing production-friendly timing and metrics:
+  - `watch.rs`: thread-safe `Watch` backed by `hdrhistogram` for percentile stats
+  - `timer.rs`: `Timer` that auto-records elapsed time on `Drop`
+  - `stopwatch!` macro for ergonomic timing (sync and async blocks)
+- Documentation updates for metrics API (`docs/API.md`, `README.md`).
+- Unit and async tests covering `Watch`, `Timer`, and `stopwatch!` macro.
+
+### Fixed
+- Corrected `hdrhistogram` dependency declaration: removed non-existent `std` feature.
+
 
 
 

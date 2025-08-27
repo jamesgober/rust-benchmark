@@ -34,6 +34,7 @@
     <li><b>Async Compatible:</b> Works seamlessly with any async runtime (<code>Tokio</code>, <code>async-std</code>, etc.) without special support or additional features - just time any expression, sync or async.</li>
     <li><b>Nanosecond Precision:</b> Uses platform-specific high-resolution timers through <code>std::time::Instant</code>, providing nanosecond-precision measurements with monotonic guarantees.</li>
     <li><b>Simple Statistics:</b> Provides essential statistics (<code>count</code>, <code>total</code>, <code>min</code>, <code>max</code>, <code>mean</code>) without complex algorithms or memory allocation, keeping the library focused and efficient.</li>
+    <li><b>Production Metrics (optional):</b> Enable the <code>metrics</code> feature for a thread-safe <code>Watch</code>, <code>Timer</code> (auto record on drop), and <code>stopwatch!</code> macro powered by <code>hdrhistogram</code> for percentiles.</li>
     <li><b>Minimal API Surface:</b> Just four functions and two macros - easy to learn, hard to misuse, and unlikely to ever need breaking changes.</li>
     <li><b>Cross-Platform:</b> Consistent behavior across <b>Linux</b>, <b>macOS</b>, <b>Windows</b>, and other platforms supported by Rust's standard library.</li>
 </ul>
@@ -63,12 +64,15 @@ benchmark = { version = "0.5.0", default-features = false }
 
 > <b>Feature flags</b>
 > - <b>Default</b>: `features = ["std", "enabled"]`.
-> - <b>Zero-overhead</b>: `default-features = false` (all timing becomes no-op; durations are zero).
-> - <b>std-only types</b>: `Collector` and `Stats` require `std`.
+> - <b>enabled</b>: turns on timing (disable for true zero-overhead no-ops).
+> - <b>std</b>: use Rust standard library (disables `no_std`).
+> - <b>metrics</b>: production metrics (`Watch`, `Timer`, `stopwatch!`) powered by `hdrhistogram` (implies `std`).
+> - <b>full</b>: convenience feature equal to `std + enabled`.
+> - <b>minimal</b>: minimal core timing only; use with `default-features = false`.
 > - For benches/examples in this README, run with: `--features "std enabled"`.
 
 <small>
-See also: <a href="./docs/API.md#async-usage"><b>Async Usage</b></a> · <a href="./docs/API.md#disabled-mode-behavior"><b>Disabled Mode Behavior</b></a>
+See also: <a href="./docs/API.md#async-usage"><b>Async Usage</b></a> · <a href="./docs/API.md#disabled-mode-behavior"><b>Disabled Mode Behavior</b></a> · <a href="./docs/API.md#production-metrics-feature-metrics"><b>Production Metrics</b></a>
 </small>
 
 ### Measure a closure
@@ -232,6 +236,7 @@ overhead::time_macro/time_macro_add
 <h3>Documentation:</h3>
 <ul>
     <li><a href="./docs/API.md"><b>API Reference</b></a> Complete documentation and examples.</li>
+    <li><a href="./docs/API.md#production-metrics-feature-metrics"><b>Production Metrics</b></a> <code>Watch</code>, <code>Timer</code>, and <code>stopwatch!</code>.</li>
     <li><a href="./docs/PRINCIPLES.md"><b>Code Principles</b></a> guidelines for contribution &amp; development.</li>
 </ul>
 

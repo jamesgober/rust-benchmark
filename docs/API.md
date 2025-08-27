@@ -25,6 +25,10 @@
 - [Macros](#macros)
   - [time!](#time)
   - [time_named!](#time_named)
+- [Production Metrics (feature: metrics)](#production-metrics-feature-metrics)
+  - [Watch](#watch)
+  - [Timer](#timer)
+  - [stopwatch!](#stopwatch)
 - [Async Usage](#async-usage)
 - [Disabled Mode Behavior](#disabled-mode-behavior)
 
@@ -72,6 +76,7 @@ cargo add benchmark --no-default-features
 
 - `enabled` (default): enables measurement (otherwise compiles to zero-overhead no-ops)
 - `std` (default): uses Rust standard library; disables `no_std`
+- `metrics` (optional): production metrics (`Watch`, `Timer`, `stopwatch!`) using `hdrhistogram`
 - `minimal`: minimal build with core timing only (no default features)
 - `full`: convenience feature equal to `std + enabled`
 
@@ -268,6 +273,219 @@ assert_eq!(d.as_nanos(), 0);
 ```
 
 <br>
+
+## Production Metrics (feature: metrics)
+Provides production-friendly timing and percentile statistics with negligible overhead and zero cost when disabled.
+
+Installation with feature:
+```toml
+[dependencies]
+benchmark = { version = "0.5.0", features = ["std", "enabled", "metrics"] }
+```
+
+### Watch
+Thread-safe collector of nanosecond timings using `hdrhistogram` under the hood.
+
+```rust
+use benchmark::Watch; // requires features = ["std", "metrics"]
+
+let watch = Watch::new();
+watch.record("db.query", 42_000);
+let stats = watch.snapshot();
+let s = &stats["db.query"];
+assert!(s.p99 >= s.p50);
+```
+
+- Methods: `new()`, `with_bounds(lowest, highest, sigfig)`, `record(name, ns)`, `record_instant(name, start)`, `snapshot()`, `clear()`, `clear_name(name)`
+- Concurrency: `Watch` is cheap to clone and `Send + Sync`.
+
+### Timer
+Records elapsed time to a `Watch` automatically when dropped.
+
+```rust
+use benchmark::{Timer, Watch};
+
+let watch = Watch::new();
+{
+    let _t = Timer::new(watch.clone(), "render");
+    // do work...
+}
+let s = watch.snapshot()["render"];
+assert!(s.count >= 1);
+```
+
+### stopwatch!
+Ergonomic macro to time a scoped block and record to a `Watch`. Works in sync and async contexts.
+
+```rust
+use benchmark::{stopwatch, Watch};
+
+let watch = Watch::new();
+stopwatch!(watch, "io", {
+    std::thread::sleep(std::time::Duration::from_millis(1));
+});
+assert_eq!(watch.snapshot()["io"].count, 1);
+```
+
+Async example:
+```rust
+use benchmark::{stopwatch, Watch};
+
+#[tokio::main(flavor = "current_thread")]
+async fn main() {
+    let watch = Watch::new();
+    stopwatch!(watch, "sleep", {
+        tokio::time::sleep(std::time::Duration::from_millis(1)).await;
+    });
+    assert_eq!(watch.snapshot()["sleep"].count, 1);
+}
+```
+
+Notes:
+- Percentiles are computed from histograms cloned outside locks for low contention.
+- Durations are clamped to histogram bounds; defaults cover 1ns..~1h.
+
+### Examples and Use-cases
+
+The snippets below assume `features = ["std", "enabled", "metrics"]`.
+
+#### Real service loop (Tokio)
+Record per-iteration latency and export periodically.
+
+```rust
+use benchmark::{stopwatch, Watch};
+
+#[tokio::main(flavor = "multi_thread")]
+async fn main() {
+    let watch = Watch::new();
+
+    // Periodic exporter (e.g., log or scrape endpoint)
+    let exporter = {
+        let w = watch.clone();
+        tokio::spawn(async move {
+            loop {
+                tokio::time::sleep(std::time::Duration::from_secs(10)).await;
+                let snap = w.snapshot();
+                for (name, s) in snap {
+                    println!(
+                        "metric={} count={} min={}ns p50={}ns p90={}ns p99={}ns max={}ns mean={:.1}",
+                        name, s.count, s.min, s.p50, s.p90, s.p99, s.max, s.mean
+                    );
+                }
+            }
+        })
+    };
+
+    // Service work loop
+    for i in 0..100u32 {
+        stopwatch!(watch, "service.tick", {
+            // do work (e.g., handle a batch)
+            tokio::time::sleep(std::time::Duration::from_millis(5 + (i % 3) as u64)).await;
+        });
+    }
+
+    exporter.abort();
+}
+```
+
+#### Per-endpoint metrics (naming convention)
+Use metric names to encode endpoint/method. Avoid user-provided strings directly.
+
+```rust
+use benchmark::{stopwatch, Watch};
+
+fn endpoint_metric(method: &str, path: &str) -> String {
+    // Prefer a stable, low-cardinality naming scheme
+    format!("http.{}:{}", method, path) // e.g., http.GET:/users/:id
+}
+
+fn handle_request(watch: &Watch, method: &str, route_path: &str) {
+    let name = endpoint_metric(method, route_path);
+    stopwatch!(watch.clone(), &name, {
+        std::thread::sleep(std::time::Duration::from_millis(2));
+    });
+}
+```
+
+#### Background worker
+Measure I/O and processing separately with clear names.
+
+```rust
+use benchmark::{stopwatch, Watch};
+
+let watch = Watch::new();
+for _ in 0..1000 {
+    stopwatch!(watch, "worker.fetch", {
+        std::thread::sleep(std::time::Duration::from_millis(1));
+    });
+    stopwatch!(watch, "worker.process", {
+        std::thread::sleep(std::time::Duration::from_millis(3));
+    });
+}
+let s = watch.snapshot();
+assert!(s["worker.process"].p90 >= s["worker.fetch"].p90);
+```
+
+#### Guard timer vs macro in async
+- Prefer `stopwatch!` inside async code; it scopes correctly and is ergonomic.
+- `Timer` also works, but be mindful of lifetimes and early `stop()` if you need to record before scope end.
+
+```rust
+use benchmark::{Timer, Watch};
+
+let w = Watch::new();
+let mut maybe_id = None;
+let mut t = Timer::new(w.clone(), "job.run");
+// ... compute an id
+maybe_id = Some(42);
+// early stop to record now
+t.stop();
+assert!(w.snapshot()["job.run"].count == 1);
+```
+
+#### Tuning histogram bounds
+Set bounds to your SLOs to reduce memory and improve precision.
+
+```rust
+use benchmark::Watch;
+
+// 100ns to 10s with 3 significant figures
+let watch = Watch::with_bounds(100, 10_000_000_000, 3);
+watch.record("op", 250);
+```
+
+#### Clearing/reset between intervals
+
+```rust
+use benchmark::Watch;
+
+let w = Watch::new();
+// ... record over a minute
+let minute = w.snapshot();
+// export minute
+w.clear(); // start fresh for the next interval
+```
+
+#### Exporting snapshot
+Iterate and serialize to your logging/metrics system. Below shows simple logging.
+
+```rust
+use benchmark::Watch;
+
+fn export(w: &Watch) {
+    for (name, s) in w.snapshot() {
+        println!(
+            "name={} count={} min={} p50={} p90={} p99={} max={} mean={:.2}",
+            name, s.count, s.min, s.p50, s.p90, s.p99, s.max, s.mean
+        );
+    }
+}
+```
+
+#### Contention tips
+- Clone `Watch` freely and pass by value to tasks/threads.
+- Use stable, low-cardinality metric names to keep the map small.
+- If extremely hot, consider sharding names (e.g., per-core suffix) and merging snapshots offline.
 
 ## Async Usage
 The macros inline timing using `std::time::Instant` under `features = ["std", "enabled"]` and fully support `await` inside the macro body. They can be used with any async runtime (Tokio, async-std, etc.).
