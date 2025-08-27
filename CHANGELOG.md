@@ -34,18 +34,9 @@
 - Documentation updated to reference version `0.2.0` and clarify feature usage (zero-overhead with `default-features = false`).
 - Tests and examples updated to match the new `Collector::record(&Measurement)` signature.
 
-### Deprecated
-- None.
-
-### Removed
-- None.
-
 ### Fixed
 - Resolved Clippy lints by adding targeted `#[allow(clippy::cast_precision_loss)]` and modernizing format strings; `#![deny(clippy::all)]` remains clean across all targets/features.
 - Ensured `no_std` test stability by gating `test_duration_display` behind the `std` feature.
-
-### Security
-- None.
 
 <br>
 
@@ -81,6 +72,7 @@ Initial pre-dev release for backup.
 - `README` file.
 
 [Unreleased]: https://github.com/jamesgober/rust-benchmark/compare/v0.2.0...HEAD
+[0.3.0]: https://github.com/jamesgober/rust-benchmark/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/jamesgober/rust-benchmark/compare/v0.1.5...v0.2.0
 [0.1.5]: https://github.com/jamesgober/rust-benchmark/compare/v0.1.0...v0.1.5
 [0.1.0]: https://github.com/jamesgober/rust-benchmark/releases/tag/v0.1.0
