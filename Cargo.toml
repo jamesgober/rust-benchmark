@@ -32,6 +32,8 @@ homepage = "https://github.com/jamesgober/rust-benchmark"
 default = ["std", "enabled"]
 enabled = []  # Benchmarking enabled (can be disabled for true zero-overhead)
 std = []      # Use the Rust standard library (disables no_std)
+minimal = []  # Minimal build with core timing only (no default features)
+full = ["std", "enabled"]  # Full build with all features enabled
 
 
 [dependencies]
