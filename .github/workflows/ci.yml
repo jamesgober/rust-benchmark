@@ -222,7 +222,7 @@ jobs:
           # Test zero-overhead claim
           echo "Testing zero-overhead when disabled..."
           cargo build --release --no-default-features
-          cargo build --release --features "benchmarking"
+          cargo build --release --features "enabled"
           
           # Run actual benchmarks if they exist
           if [ -d "benches" ]; then

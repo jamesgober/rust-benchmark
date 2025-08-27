@@ -282,7 +282,14 @@ mod tests {
 
     #[test]
     fn test_measure() {
-        let (result, duration) = measure(|| 42);
+        let (result, duration) = measure(|| {
+            #[cfg(feature = "enabled")]
+            {
+                // Ensure non-zero elapsed time on platforms with coarse timers
+                std::thread::sleep(std::time::Duration::from_millis(1));
+            }
+            42
+        });
         assert_eq!(result, 42);
         #[cfg(feature = "enabled")]
         assert!(duration.as_nanos() > 0);
