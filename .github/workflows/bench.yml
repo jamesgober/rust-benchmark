@@ -1,4 +1,4 @@
-name: Benchmarks (manual, nightly)
+name: Benchmarks
 
 on:
   workflow_dispatch: {}
@@ -31,3 +31,21 @@ jobs:
           RUSTFLAGS: "-C target-cpu=native"
         run: |
           cargo bench --features "std enabled"
+
+      - name: Compare enabled vs disabled (example)
+        run: |
+          set -e
+          echo "Running example with disabled mode (no-default-features)"
+          cargo run --release --example overhead_compare --no-default-features > disabled.txt
+          echo "Running example with enabled mode (std+enabled)"
+          cargo run --release --example overhead_compare --no-default-features --features "std enabled" > enabled.txt
+          echo "--- disabled.txt" && cat disabled.txt
+          echo "--- enabled.txt" && cat enabled.txt
+
+      - name: Upload compare artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: overhead-compare
+          path: |
+            disabled.txt
+            enabled.txt

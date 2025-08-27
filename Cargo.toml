@@ -41,6 +41,7 @@ full = ["std", "enabled"]  # Full build with all features enabled
 [dev-dependencies]
 criterion = "0.5"
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "time"] }
+trybuild = "1.0"
 
 [[bench]]
 name = "overhead"

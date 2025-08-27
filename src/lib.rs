@@ -88,7 +88,7 @@ pub fn measure<T, F: FnOnce() -> T>(f: F) -> (T, Duration) {
 
 /// Measures the execution time of a function (disabled version).
 #[cfg(not(feature = "enabled"))]
-#[inline(always)]
+#[inline]
 pub fn measure<T, F: FnOnce() -> T>(f: F) -> (T, Duration) {
     (f(), Duration::ZERO)
 }
@@ -130,7 +130,7 @@ pub fn measure_named<T, F: FnOnce() -> T>(name: &'static str, f: F) -> (T, Measu
 
 /// Measures the execution time of a function with a name (disabled version).
 #[cfg(not(feature = "enabled"))]
-#[inline(always)]
+#[inline]
 pub fn measure_named<T, F: FnOnce() -> T>(name: &'static str, f: F) -> (T, Measurement) {
     let measurement = Measurement { name, duration: Duration::ZERO, timestamp: 0 };
     (f(), measurement)

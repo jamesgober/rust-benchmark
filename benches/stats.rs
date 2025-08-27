@@ -1,6 +1,12 @@
+#[cfg(not(feature = "std"))]
+fn main() {}
+
+#[cfg(feature = "std")]
 use benchmark::*;
+#[cfg(feature = "std")]
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 
+#[cfg(feature = "std")]
 fn build_collector(keys: usize, per_key: usize) -> Collector {
     let c = Collector::with_capacity(keys);
     for k in 0..keys {
@@ -14,6 +20,7 @@ fn build_collector(keys: usize, per_key: usize) -> Collector {
     c
 }
 
+#[cfg(feature = "std")]
 fn build_arrays(keys: usize, per_key: usize) -> Vec<(&'static str, Vec<Duration>)> {
     let mut out = Vec::with_capacity(keys);
     for k in 0..keys {
@@ -28,6 +35,7 @@ fn build_arrays(keys: usize, per_key: usize) -> Vec<(&'static str, Vec<Duration>
     out
 }
 
+#[cfg(feature = "std")]
 fn bench_stats_single(c: &mut Criterion) {
     let mut group = c.benchmark_group("stats::single");
     for &size in &[1_000usize, 10_000] {
@@ -49,6 +57,7 @@ fn bench_stats_single(c: &mut Criterion) {
     group.finish();
 }
 
+#[cfg(feature = "std")]
 fn bench_stats_all(c: &mut Criterion) {
     let mut group = c.benchmark_group("stats::all");
     for &(keys, per_key) in &[(10usize, 1_000usize), (50, 1_000)] {
@@ -67,6 +76,7 @@ fn bench_stats_all(c: &mut Criterion) {
     group.finish();
 }
 
+#[cfg(feature = "std")]
 fn bench_array_aggregate(c: &mut Criterion) {
     // Compare pure aggregation without locks
     let mut group = c.benchmark_group("stats::array");
@@ -104,11 +114,14 @@ fn bench_array_aggregate(c: &mut Criterion) {
     group.finish();
 }
 
+#[cfg(feature = "std")]
 fn criterion_benches(c: &mut Criterion) {
     bench_stats_single(c);
     bench_stats_all(c);
     bench_array_aggregate(c);
 }
 
+#[cfg(feature = "std")]
 criterion_group!(benches, criterion_benches);
+#[cfg(feature = "std")]
 criterion_main!(benches);

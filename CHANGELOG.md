@@ -11,6 +11,17 @@
 ## [Unreleased]
 
 ### Added
+- Trybuild compile tests for disabled mode to assert API compiles in zero-overhead configuration:
+  - `tests/trybuild_disabled.rs`
+  - Fixture: `tests/trybuild/disabled_ok.rs`
+- CI assembly inspection job to emit symbol tables and disassembly for enabled vs disabled builds:
+  - Workflow: `.github/workflows/ci.yml` job "Assembly Inspection"
+  - Artifacts: `assembly-artifacts` (objdump/llvm-objdump outputs)
+- Dual-mode runtime comparison in bench workflow:
+  - `.github/workflows/bench.yml` runs `examples/overhead_compare.rs` in disabled and enabled modes and uploads `overhead-compare` artifacts
+- Example for overhead comparison:
+  - `examples/overhead_compare.rs`
+- README: “Zero-overhead Proof” section linking CI size comparison, assembly artifacts, and example outputs
 - Criterion benchmarks for overhead analysis:
   - Bench file: `benches/overhead.rs`
   - Compares `Instant::now()` vs `measure` vs `time!`
@@ -93,6 +104,7 @@ Initial pre-dev release for backup.
 - `README` file.
 
 [Unreleased]: https://github.com/jamesgober/rust-benchmark/compare/v0.2.0...HEAD
+[0.5.0]: https://github.com/jamesgober/rust-benchmark/compare/v0.2.0...v0.5.0
 [0.5.0]: https://github.com/jamesgober/rust-benchmark/compare/v0.2.0...v0.5.0
 [0.2.0]: https://github.com/jamesgober/rust-benchmark/compare/v0.1.5...v0.2.0
 [0.1.5]: https://github.com/jamesgober/rust-benchmark/compare/v0.1.0...v0.1.5

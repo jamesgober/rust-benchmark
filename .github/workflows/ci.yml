@@ -94,6 +94,68 @@ jobs:
             cargo test --workspace --no-default-features --features "${{ matrix.features }}"
           fi
 
+  # Assembly inspection (artifacts for manual review)
+  assembly:
+    name: Assembly Inspection
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build disabled (rlib)
+        run: |
+          cargo clean
+          cargo build --release --lib --no-default-features
+          cp target/release/libbenchmark.rlib libbenchmark_disabled.rlib || true
+
+      - name: Build enabled (rlib)
+        run: |
+          cargo clean
+          cargo build --release --lib --features "enabled"
+          cp target/release/libbenchmark.rlib libbenchmark_enabled.rlib || true
+
+      - name: Dump symbols and disassembly (GNU objdump)
+        run: |
+          set -e
+          if command -v objdump >/dev/null 2>&1; then
+            if [ -f libbenchmark_disabled.rlib ]; then
+              objdump -t libbenchmark_disabled.rlib > symbols_disabled.txt || true
+              objdump -d libbenchmark_disabled.rlib > disasm_disabled.txt || true
+            fi
+            if [ -f libbenchmark_enabled.rlib ]; then
+              objdump -t libbenchmark_enabled.rlib > symbols_enabled.txt || true
+              objdump -d libbenchmark_enabled.rlib > disasm_enabled.txt || true
+            fi
+          else
+            echo "objdump not available, skipping"
+          fi
+
+      - name: Dump disassembly (LLVM objdump fallback)
+        run: |
+          if command -v llvm-objdump >/dev/null 2>&1; then
+            if [ -f libbenchmark_disabled.rlib ]; then
+              llvm-objdump -t libbenchmark_disabled.rlib > symbols_disabled_llvm.txt || true
+              llvm-objdump -d libbenchmark_disabled.rlib > disasm_disabled_llvm.txt || true
+            fi
+            if [ -f libbenchmark_enabled.rlib ]; then
+              llvm-objdump -t libbenchmark_enabled.rlib > symbols_enabled_llvm.txt || true
+              llvm-objdump -d libbenchmark_enabled.rlib > disasm_enabled_llvm.txt || true
+            fi
+          else
+            echo "llvm-objdump not available, skipping"
+          fi
+
+      - name: Upload assembly artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: assembly-artifacts
+          path: |
+            symbols_*.txt
+            disasm_*.txt
+
   # Code quality checks
   quality:
     name: Code Quality
@@ -111,7 +173,9 @@ jobs:
         run: cargo fmt --all -- --check
 
       - name: Clippy analysis
-        run: cargo clippy --workspace --all-features --all-targets -- -D warnings
+        run: |
+          cargo clippy --workspace --all-features --all-targets -- -D warnings
+          cargo clippy --workspace --no-default-features --all-targets -- -D warnings
 
       # Commented out failing check
       # - name: Check for unused dependencies
@@ -204,6 +268,43 @@ jobs:
 
       - name: Test documentation examples
         run: cargo test --workspace --all-features --doc
+
+  # Build benches and examples across feature modes to catch regressions
+  build-benches-examples:
+    name: Build benches/examples (all feature modes)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Build default features
+        run: |
+          cargo build --benches -q
+          cargo build --examples -q
+
+      - name: Build all features
+        run: |
+          cargo build --benches --all-features -q
+          cargo build --examples --all-features -q
+
+      - name: Build no default features
+        run: |
+          cargo build --benches --no-default-features -q
+          cargo build --examples --no-default-features -q
 
   # Performance benchmarks (only on main branch)
   benchmarks:

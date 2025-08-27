@@ -148,6 +148,30 @@ This repository includes Criterion benchmarks that measure the overhead of the p
 <pre><code>cargo bench
 </code></pre>
 
+<hr>
+
+<h2>Zero-overhead Proof</h2>
+<p>
+This project includes automated checks that verify zero bytes and zero time when disabled, and provide assembly and runtime comparison artifacts.
+</p>
+
+<ul>
+  <li><b>Size comparison (CI)</b>: Workflow <code>.github/workflows/ci.yml</code>, job <b>Zero Overhead</b> builds the crate twice and compares <code>libbenchmark.rlib</code> sizes with and without <code>enabled</code>. Any unexpected growth fails the job.</li>
+  <li><b>Assembly artifacts (CI)</b>: Job <b>Assembly Inspection</b> emits <code>objdump</code>/<code>llvm-objdump</code> symbol tables and disassembly for enabled vs disabled. Download the <b>assembly-artifacts</b> artifact from the run to inspect.</li>
+  <li><b>Runtime comparison (CI)</b>: Bench workflow <code>.github/workflows/bench.yml</code> runs the example <code>examples/overhead_compare.rs</code> in both modes and uploads <b>overhead-compare</b> artifacts with raw output.</li>
+  <li><b>Compile tests (trybuild)</b>: <code>tests/trybuild_disabled.rs</code> ensures disabled mode compiles with the macro and function APIs used in a minimal program.</li>
+  <li><b>Local reproduction</b>:
+    <ul>
+      <li>Disabled: <code>cargo run --release --example overhead_compare --no-default-features</code></li>
+      <li>Enabled: <code>cargo run --release --example overhead_compare --no-default-features --features "std enabled"</code></li>
+    </ul>
+  </li>
+</ul>
+
+<p>
+When features are disabled (<code>default-features = false</code>), timing returns <code>Duration::ZERO</code> and produces no runtime cost (e.g., <code>time_macro_ns=0</code> on CI-hosted runners), validating the zero-overhead guarantee.
+</p>
+
 <h3>Sample results (illustrative)</h3>
 <p><i>Results below are from a recent run on GitHub-hosted Linux runners; your numbers will vary by hardware and load.</i></p>
 <pre><code>Overhead
