@@ -1,15 +1,30 @@
+#╔═══════════════════════════════════════════════════════════╗
+#║                                                           ║
+#║      ▗▄▄▖ ▗▄▄▄▖▗▖  ▗▖ ▗▄▄▖▗▖ ▗▖▗▖  ▗▖ ▗▄▖ ▗▄▄▄▖ ▗▖ ▗▖     ║
+#║      ▐▌ ▐▌▐▌   ▐▛▚▖▐▌▐▌   ▐▌ ▐▌▐▛▚▞▜▌▐▌ ▐▌▐▌  ▐▌▐▌▗▞▘     ║
+#║      ▐▛▀▚▖▐▛▀▀▘▐▌ ▝▜▌▐▌   ▐▛▀▜▌▐▌  ▐▌▐▛▀▜▌▐▛▀▀▚▖▐▛▚▖      ║
+#║      ▐▙▄▞▘▐▙▄▄▖▐▌  ▐▌▝▚▄▄▖▐▌ ▐▌▐▌  ▐▌▐▌ ▐▌▐▌  ▐▌▐▌ ▐▌     ║
+#║                                                           ║
+#╠═══════════╦══════════════════════════════════╦════════════╣
+#║ BENCHMARK ┇ PERFORMANCE BENCHMARKING LIBRARY ┇ RUST BUILT ║
+#╚═══════════╩══════════════════════════════════╩════════════╝
 [package]
-name = "benchmark"
-version = "0.2.0"
+name    = "benchmark"
+version = "0.5.0"
 edition = "2021"
+
+# License
 license = "Apache-2.0"
-readme = "README.md"
 
-authors = [
-    "James Gober <code@jamesgober.dev>"
-]
+# Links
+homepage      = "https://github.com/jamesgober/rust-benchmark"
+repository    = "https://github.com/jamesgober/rust-benchmark"
+documentation = "https://docs.rs/benchmark"
 
+# Description
 description = "A high-precision Rust benchmarking library for measuring execution time (microseconds), memory usage, and other performance metrics. Ideal for profiling and optimizing Rust code."
+
+# Keywords (5 total)
 keywords = [
     "benchmark", 
     "performance", 
@@ -18,35 +33,56 @@ keywords = [
     "metrics"
 ]
 
+# Categories (5 total)
 categories = [
     "development-tools::profiling", 
     "memory-management"
 ]
 
-documentation = "https://docs.rs/benchmark"
-repository = "https://github.com/jamesgober/rust-benchmark"
-homepage = "https://github.com/jamesgober/rust-benchmark"
+# Authors
+authors = [
+    "James Gober <code@jamesgober.dev>"
+]
 
 
+
+#╔═══════════════════════════════════════════════════════════╗
+#║ ⚙️ FEATURES
+#╚═══════════════════════════════════════════════════════════╝
 [features]
-default = ["std", "enabled"]
-enabled = []  # Benchmarking enabled (can be disabled for true zero-overhead)
-std = []      # Use the Rust standard library (disables no_std)
-minimal = []  # Minimal build with core timing only (no default features)
-full = ["std", "enabled"]  # Full build with all features enabled
+default = ["std", "enabled"] # Default features (includes std and enabled)
+enabled = []                 # Benchmarking enabled (can be disabled for true zero-overhead)
+std     = []                 # Use the Rust standard library (disables no_std)
+full    = ["std", "enabled"] # Full build with all features enabled
+minimal = []                 # Minimal build with core timing only (no default features)
 
 
+
+#╔═══════════════════════════════════════════════════════════╗
+#║ 🧭 BENCHMARKS
+#╚═══════════════════════════════════════════════════════════╝
+[[bench]] # Zero Overhead Claim
+name    = "overhead"
+harness = false
+
+[[bench]] # Statistics Claim
+name    = "stats"
+harness = false
+
+
+
+#╔═══════════════════════════════════════════════════════════╗
+#║ 🧩 DEPENDENCIES
+#╚═══════════════════════════════════════════════════════════╝
 [dependencies]
+# NONE
 
+
+
+#╔═══════════════════════════════════════════════════════════╗
+#║ 🧩 DEV DEPENDENCIES
+#╚═══════════════════════════════════════════════════════════╝
 [dev-dependencies]
+tokio     = { version = "1", features = ["macros", "rt-multi-thread", "time"] }
+trybuild  = "1.0"
 criterion = "0.5"
-tokio = { version = "1", features = ["macros", "rt-multi-thread", "time"] }
-trybuild = "1.0"
-
-[[bench]]
-name = "overhead"
-harness = false
-
-[[bench]]
-name = "stats"
-harness = false
