@@ -1,5 +1,6 @@
 use trybuild::TestCases;
 
+#[cfg_attr(miri, ignore)]
 #[test]
 pub fn disabled_mode_compiles() {
     // This test relies on the cargo invocation features.

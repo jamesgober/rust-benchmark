@@ -367,10 +367,21 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install MSRV Rust
-        uses: dtolnay/rust-toolchain@1.75.0
-        with:
-          components: rustfmt, clippy
+      - name: Install MSRV Rust (retry)
+        shell: bash
+        run: |
+          set -euo pipefail
+          MSRV=1.75.0
+          echo "Installing Rust $MSRV with retry..."
+          for attempt in 1 2 3; do
+            if rustup toolchain install "$MSRV" -c rustfmt -c clippy; then
+              break
+            fi
+            echo "rustup install attempt $attempt failed; retrying after backoff..."
+            sleep $((10 * attempt))
+          done
+          rustup default "$MSRV"
+          rustc --version
 
       # Regenerate Cargo.lock to ensure compatibility
       - name: Delete existing Cargo.lock
