@@ -55,7 +55,6 @@ benchmark = "0.2.0"
 benchmark = { version = "0.2.0", default-features = false }
 ```
 
-
 <br>
 
 ## Quick Start

@@ -15,7 +15,16 @@
 ## [0.2.0] - 2025-08-27
 
 ### Added
-- None.
+- `collector.rs` file.
+- `duration.rs` file.
+- `measurement.rs` file.
+- `integration_tests.rs` file in `tests`.
+- Public API surface introduced:
+  - Types: `Duration`, `Measurement`.
+  - Functions: `measure`, `measure_named`.
+  - Macros: `time!`, `time_named!`.
+  - std-only types: `Collector`, `Stats` (behind `std` feature).
+- Feature flags: `enabled`, `std`, `minimal`, `full` with `default = ["std", "enabled"]`.
 
 ### Changed
 - BREAKING: `Collector::record` now accepts `&Measurement` instead of taking it by value: `pub fn record(&self, measurement: &Measurement)`.
