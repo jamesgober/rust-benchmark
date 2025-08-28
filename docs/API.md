@@ -40,7 +40,9 @@
 
 ## Installation
 
-### Install Manually
+### Default Installation
+
+#### Install Manually
 
 Add this to your `Cargo.toml`:
 ```toml
@@ -48,7 +50,21 @@ Add this to your `Cargo.toml`:
 benchmark = "0.5.0"
 ```
 
-#### Disable Default Features
+<br>
+
+#### Install via Terminal
+```bash
+# Basic installation (benchmarking feature only)
+cargo add benchmark
+```
+
+<br>
+
+
+###  Disable Default Features
+
+#### Manually: Disable Default Features
+Add this to your `Cargo.toml`:
 ```toml
 [dependencies]
 # Disable default features for true zero-overhead
@@ -57,41 +73,15 @@ benchmark = { version = "0.5.0", default-features = false }
 
 <br>
 
-### Install via Terminal
-```bash
-# Basic installation (benchmarking feature only)
-cargo add benchmark
-```
-
-<p>
-  <b>⚠️ NOTE:</b> By default, <b><a href="./docs/PROD.md">production-level</a></b> benchmark features for <i>performance metrics</i> are disabled.
-  <br>
-  <br>
-  Use the <b><code>metrics</code></b> feature to enable the <b>production features</b>, or use the <b><code>standard</code></b> feature for to enable <i>all benchmark features</i> including  <code>development</code> and <code>production</code>. 
-</p>
-
-#### Install via Terminal
-```bash
-# Basic installation (benchmarking feature only)
-cargo add benchmark
-```
-
-
-### Install via Terminal
-```bash
-# Basic installation (benchmarking feature only)
-cargo add benchmark
-```
-
 #### Terminal: Disable Default Features
 ```bash
 # Explicitly disabled - zero overhead
 cargo add benchmark --no-default-features
 ```
 
+<br>
 
-
-See [**`FEATURES DOCUMENTATION`**](./features/README.md) for more information.
+&mdash; See [**`FEATURES DOCUMENTATION`**](./features/README.md) for more information.
 
 <hr>
 <br>

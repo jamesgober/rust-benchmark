@@ -52,7 +52,7 @@
 </ul>
 <br>
 <p>
-   🔗 See <a href="./docs/BENCHMARK.md"><b>Benchmark Documentation</b></a> for more information.
+  &mdash; See <a href="./docs/BENCHMARK.md"><b>Benchmark Documentation</b></a> for more information.
 </p>
 
 <br>
@@ -73,7 +73,7 @@
 
 <br>
 <p>
-   🔗 See <a href="./docs/METRICS.md"><b>Metrics Documentation</b></a> for more information.
+   &mdash; See <a href="./docs/METRICS.md"><b>Metrics Documentation</b></a> for more information.
 </p>
 
 <hr>
@@ -105,7 +105,7 @@
 - `minimal`: minimal build with core timing only (*no default features*)
 - `all`: Activates all features (*includes: `std + benchmark + metrics`*)
 
-🔗 See [**`FEATURES DOCUMENTATION`**](./docs/features/README.md) for more information.
+&mdash; See [**`FEATURES DOCUMENTATION`**](./docs/features/README.md) for more information.
 
 <br>
 <hr>
@@ -146,7 +146,7 @@ benchmark = { version = "0.5.0", default-features = false }
 ```
 <br>
 
-🔗 See [**`FEATURES DOCUMENTATION`**](./docs/features/README.md) for more information.
+&mdash; See [**`FEATURES DOCUMENTATION`**](./docs/features/README.md) for more information.
 
 <hr>
 <br>
