@@ -17,7 +17,7 @@ fn bench_histogram_record(c: &mut Criterion) {
                 Histogram::new,
                 |h| {
                     for i in 0..iters {
-                        h.record((i as u64 % 1000) + 1);
+                        h.record((i % 1000) + 1);
                     }
                     h
                 },
@@ -38,7 +38,7 @@ fn bench_histogram_percentiles(c: &mut Criterion) {
                 || {
                     let h = Histogram::new();
                     for i in 0..iters {
-                        h.record((i as u64 % 200_000) + 1);
+                        h.record((i % 200_000) + 1);
                     }
                     h
                 },
