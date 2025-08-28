@@ -696,6 +696,12 @@ mod tests {
     use std::sync::Arc;
     use std::thread;
 
+    #[inline]
+    fn perf_enabled() -> bool {
+        // Opt-in perf tests via environment to avoid CI/host variance
+        std::env::var_os("PERF_TESTS").is_some()
+    }
+
     #[test]
     fn test_empty_histogram() {
         let hist = Histogram::new();
@@ -963,6 +969,10 @@ mod tests {
     #[cfg_attr(not(feature = "perf-tests"), ignore)]
     #[test]
     fn test_performance_characteristics() {
+        if !perf_enabled() {
+            eprintln!("skipping perf test: set PERF_TESTS=1 to enable");
+            return;
+        }
         let hist = Histogram::new();
 
         // Record a large number of values to test performance
@@ -1023,9 +1033,18 @@ mod benches {
     use std::sync::Arc;
     use std::thread;
 
+    #[inline]
+    fn perf_enabled() -> bool {
+        std::env::var_os("PERF_TESTS").is_some()
+    }
+
     #[cfg_attr(not(feature = "perf-tests"), ignore)]
     #[test]
     fn bench_record_single_thread() {
+        if !perf_enabled() {
+            eprintln!("skipping perf bench: set PERF_TESTS=1 to enable");
+            return;
+        }
         let hist = Histogram::new();
         let iterations: u64 = 10_000_000;
 
@@ -1048,6 +1067,10 @@ mod benches {
     #[cfg_attr(not(feature = "perf-tests"), ignore)]
     #[test]
     fn bench_record_multi_thread() {
+        if !perf_enabled() {
+            eprintln!("skipping perf bench: set PERF_TESTS=1 to enable");
+            return;
+        }
         let hist = Arc::new(Histogram::new());
         let threads: u64 = 8;
         let iterations_per_thread: u64 = 1_000_000;
@@ -1086,6 +1109,10 @@ mod benches {
     #[cfg_attr(not(feature = "perf-tests"), ignore)]
     #[test]
     fn bench_percentile_calculation() {
+        if !perf_enabled() {
+            eprintln!("skipping perf bench: set PERF_TESTS=1 to enable");
+            return;
+        }
         let hist = Histogram::new();
 
         // Populate with realistic timing data

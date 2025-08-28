@@ -54,10 +54,10 @@ The <b>benchmark</b> feature provides a lightweight, statistically-sound toolkit
 [dependencies]
 
 # Benchmark is enabled by default.
-benchmark = "0.5.0"
+benchmark = "0.5.8"
 
 # or enable benchmark directly. 
-benchmark = { version = "0.5.0", features = ["benchmark", "std"]}
+benchmark = { version = "0.5.8", features = ["benchmark", "std"]}
 ```
 > ⚙️ Add directly to your `Cargo.toml`.
 
@@ -104,6 +104,50 @@ fn main() {
         s.count, s.mean.as_nanos(), s.min.as_nanos(), s.max.as_nanos());
 }
 ```
+
+
+### Micro-Benchmarking with `benchmark_block!`
+Collect raw per-iteration durations for tight loops or inner functions.
+```rust
+use benchmark::benchmark_block;
+
+fn hot() { std::hint::black_box(1 + 1); }
+
+fn main() {
+    // Default 10_000 iterations
+    let samples = benchmark_block!({ hot() });
+    assert_eq!(samples.len(), 10_000);
+
+    // Explicit iterations
+    let samples = benchmark_block!(5_000usize, { hot() });
+    println!("n={} first={}ns", samples.len(), samples[0].as_nanos());
+}
+```
+
+<br>
+
+### Macro-Benchmarking with `benchmark!`
+Name your benchmark and capture the last result plus labeled measurements.
+```rust
+use benchmark::benchmark;
+
+fn parse(input: &str) -> i64 { input.parse().unwrap_or_default() }
+
+fn main() {
+    // Default 10_000 iterations
+    let (last, ms) = benchmark!("parse", { parse("12345") });
+    assert_eq!(last, Some(12345));
+    assert_eq!(ms[0].name, "parse");
+
+    // Explicit iterations
+    let (_last, ms2) = benchmark!("double", 500usize, { 2 * 2 });
+    assert_eq!(ms2.len(), 500);
+}
+```
+
+<small>
+Disabled mode (`default-features = false`): `benchmark_block!` runs once and returns `vec![]`; `benchmark!` runs once and returns `(Some(result), vec![])`.
+</small>
 
 
 ### Standard bench test (named measurements)

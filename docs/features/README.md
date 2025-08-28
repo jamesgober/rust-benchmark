@@ -64,7 +64,7 @@
 #### Manual installation:
 ```toml
 [dependencies]
-benchmark = "0.5.0" # default features enabled.
+benchmark = "0.5.8" # default features enabled.
 
 # Default features are enabled automatically; no extra configuration needed.
 ```
@@ -98,7 +98,7 @@ Enables the [**`benchmark`**](./BENCHMARK.md) feature.
 #### Manual installation:
 ```toml
 [dependencies]
-benchmark = { version = "0.5.0", features = ["standard"]}
+benchmark = { version = "0.5.8", features = ["standard"]}
 ```
 > ⚙️ Add directly to your `Cargo.toml`.
 
@@ -129,7 +129,7 @@ Enables both the [**`benchmark`**](./BENCHMARK.md) and the [**`metrics`**](./MET
 #### Manual installation:
 ```toml
 [dependencies]
-benchmark = { version = "0.5.0", default-features = false }
+benchmark = { version = "0.5.8", default-features = false }
 ```
 > ⚙️ Add directly to your `Cargo.toml`.
 

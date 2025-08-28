@@ -49,7 +49,7 @@ The <b>metrics</b> feature provides production-grade latency metrics with near-z
 ### Manual installation:
 ```toml
 [dependencies]
-benchmark = { version = "0.5.0", features = ["metrics"] }
+benchmark = { version = "0.5.8", features = ["metrics"] }
 ```
 > ⚙️ Add directly to your `Cargo.toml`.
 

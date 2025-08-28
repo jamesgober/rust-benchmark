@@ -283,3 +283,121 @@ macro_rules! stopwatch {
         { $($body)* }
     }};
 }
+
+/// Micro-benchmark a code block for a number of iterations and return raw per-iteration durations.
+///
+/// Two forms are supported:
+/// - `benchmark_block!({ body })` uses a default of 10,000 iterations
+/// - `benchmark_block!(iters, { body })` runs the block `iters` times
+///
+/// The block may contain `await` and arbitrary statements. When the `benchmark`
+/// feature is disabled, the block executes once (to preserve side effects) and
+/// the macro returns an empty `Vec` with zero timing overhead.
+#[cfg(all(feature = "benchmark", feature = "std"))]
+#[macro_export]
+macro_rules! benchmark_block {
+    ({ $($body:tt)* }) => {
+        $crate::benchmark_block!(10_000usize, { $($body)* })
+    };
+    ($iters:expr, { $($body:tt)* }) => {{
+        let __iters: usize = $iters;
+        let mut __samples: ::std::vec::Vec<$crate::Duration> = ::std::vec::Vec::with_capacity(__iters);
+        let mut __i = 0usize;
+        while __i < __iters {
+            let __start = ::std::time::Instant::now();
+            { $($body)* }
+            let __dur = $crate::Duration::from_nanos(__start.elapsed().as_nanos());
+            __samples.push(__dur);
+            __i += 1;
+        }
+        __samples
+    }};
+}
+
+/// Disabled version of `benchmark_block!` when `benchmark` is off.
+#[cfg(not(feature = "benchmark"))]
+#[macro_export]
+macro_rules! benchmark_block {
+    ({ $($body:tt)* }) => {{
+        { $($body)* }
+        ::std::vec::Vec::<$crate::Duration>::new()
+    }};
+    ($iters:expr, { $($body:tt)* }) => {{
+        let _ = $iters; // keep param unused warnings away
+        { $($body)* }
+        ::std::vec::Vec::<$crate::Duration>::new()
+    }};
+}
+
+/// Macro-benchmark an expression/function for a number of iterations and return
+/// the last result together with raw per-iteration `Measurement`s.
+///
+/// Forms supported:
+/// - `benchmark!(name, expr)` uses a default of 10,000 iterations
+/// - `benchmark!(name, iters, expr)` runs `expr` `iters` times
+/// - `benchmark!(name, { body })` and `benchmark!(name, iters, { body })` also work
+///
+/// The expression/body may contain `await`. When the `benchmark` feature is
+/// disabled, the expression executes once and the macro returns `(Some(output), vec![])`
+/// with zero timing overhead.
+#[cfg(all(feature = "benchmark", feature = "std"))]
+#[macro_export]
+macro_rules! benchmark {
+    ($name:expr, { $($body:tt)* }) => {
+        $crate::benchmark!($name, 10_000usize, { $($body)* })
+    };
+    ($name:expr, $iters:expr, { $($body:tt)* }) => {{
+        let __name: &'static str = $name;
+        let __iters: usize = $iters;
+        let mut __measurements: ::std::vec::Vec<$crate::Measurement> = ::std::vec::Vec::with_capacity(__iters);
+        let mut __last = None;
+        let mut __i = 0usize;
+        while __i < __iters {
+            let __start = ::std::time::Instant::now();
+            let __out = { $($body)* };
+            let __dur = $crate::Duration::from_nanos(__start.elapsed().as_nanos());
+            #[cfg(miri)]
+            let __ts = 0;
+            #[cfg(not(miri))]
+            let __ts = ::std::time::SystemTime::now()
+                .duration_since(::std::time::UNIX_EPOCH)
+                .map_or(0, |d| d.as_nanos());
+            __measurements.push($crate::Measurement { name: __name, duration: __dur, timestamp: __ts });
+            __last = Some(__out);
+            __i += 1;
+        }
+        (__last, __measurements)
+    }};
+    ($name:expr, $expr:expr) => {
+        $crate::benchmark!($name, 10_000usize, { $expr })
+    };
+    ($name:expr, $iters:expr, $expr:expr) => {
+        $crate::benchmark!($name, $iters, { $expr })
+    };
+}
+
+/// Disabled version of `benchmark!` when `benchmark` is off.
+#[cfg(not(feature = "benchmark"))]
+#[macro_export]
+macro_rules! benchmark {
+    ($name:expr, { $($body:tt)* }) => {{
+        let _ = $name;
+        let __out = { $($body)* };
+        (Some(__out), ::std::vec::Vec::<$crate::Measurement>::new())
+    }};
+    ($name:expr, $iters:expr, { $($body:tt)* }) => {{
+        let _ = ($name, $iters);
+        let __out = { $($body)* };
+        (Some(__out), ::std::vec::Vec::<$crate::Measurement>::new())
+    }};
+    ($name:expr, $expr:expr) => {{
+        let _ = $name;
+        let __out = $expr;
+        (Some(__out), ::std::vec::Vec::<$crate::Measurement>::new())
+    }};
+    ($name:expr, $iters:expr, $expr:expr) => {{
+        let _ = ($name, $iters);
+        let __out = $expr;
+        (Some(__out), ::std::vec::Vec::<$crate::Measurement>::new())
+    }};
+}

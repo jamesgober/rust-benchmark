@@ -25,6 +25,8 @@
 - [Macros](#macros)
   - [time!](#time)
   - [time_named!](#time_named)
+  - [benchmark_block!](#benchmark_block)
+  - [benchmark!](#benchmark)
 - [Production Metrics (feature: metrics)](#production-metrics-feature-metrics)
   - [Watch](#watch)
   - [Timer](#timer)
@@ -35,6 +37,16 @@
 - [Examples](#examples)
   - [Rust Benchmark](#rust-benchmark)
   - [Code Benchmark](#code-benchmark)
+  - [Micro-Benchmarking](#micro-benchmarking)
+  - [Macro-Benchmarking](#macro-benchmarking)
+  - [A/B Testing](#ab-testing)
+  - [Statistical Testing](#statistical-testing)
+  - [Load Testing](#load-testing)
+  - [Code Instrumentation](#code-instrumentation)
+  - [Distributed Tracing](#distributed-tracing)
+  - [Real-time Metrics](#real-time-metrics)
+  - [Health Check Metrics](#health-check-metrics)
+  - [APM Integration](#apm-integration)
 
 <br><br>
 
@@ -47,7 +59,7 @@
 Add this to your `Cargo.toml`:
 ```toml
 [dependencies]
-benchmark = "0.5.0"
+benchmark = "0.5.8"
 ```
 
 <br>
@@ -68,7 +80,7 @@ Add this to your `Cargo.toml`:
 ```toml
 [dependencies]
 # Disable default features for true zero-overhead
-benchmark = { version = "0.5.0", default-features = false }
+benchmark = { version = "0.5.8", default-features = false }
 ```
 
 <br>
@@ -296,13 +308,81 @@ assert_eq!(d.as_nanos(), 0);
 
 <br>
 
+### benchmark_block!
+Runs a code block repeatedly and returns raw per-iteration durations as `Vec<Duration>`.
+
+Forms:
+
+```rust
+// Default iterations: 10_000
+let samples: Vec<benchmark::Duration> = benchmark::benchmark_block!({
+    // code to benchmark
+    std::hint::black_box(1 + 1);
+});
+
+// Explicit iterations
+let n = 1_234usize;
+let samples = benchmark::benchmark_block!(n, {
+    std::hint::black_box(2 * 3);
+});
+```
+
+Notes:
+- Raw data enables flexible downstream stats (mean, percentiles, etc.).
+- Async-compatible: you can `await` inside the block.
+- Disabled path (`!benchmark`): the block runs once, returns an empty vec for zero overhead.
+
+Async example:
+```rust
+#[tokio::main(flavor = "current_thread")]
+async fn main() {
+    let samples = benchmark::benchmark_block!(100, {
+        tokio::time::sleep(std::time::Duration::from_millis(1)).await;
+    });
+    assert_eq!(samples.len(), 100);
+}
+```
+
+<br>
+
+### benchmark!
+Runs an expression repeatedly, labeling per-iteration samples. Returns `(Option<T>, Vec<Measurement>)` where `Option<T>` is the last result.
+
+Forms:
+
+```rust
+// Default iterations: 10_000
+let (last, samples) = benchmark::benchmark!("add", { 2 + 3 });
+
+// Explicit iterations
+let (last, samples) = benchmark::benchmark!("mul", 77usize, { 6 * 7 });
+```
+
+Notes:
+- `samples[i].name == "add"` (or your provided name).
+- Async-compatible: expressions/blocks may use `await`.
+- Disabled path (`!benchmark`): runs once and returns `(Some(result), vec![])`.
+
+Async example:
+```rust
+#[tokio::main(flavor = "current_thread")]
+async fn main() {
+    let (_last, samples) = benchmark::benchmark!("sleep", 50usize, {
+        tokio::time::sleep(std::time::Duration::from_millis(1)).await;
+    });
+    assert_eq!(samples.len(), 50);
+}
+```
+
+<br>
+
 ## Production Metrics (feature: metrics)
 Provides production-friendly timing and percentile statistics with negligible overhead and zero cost when disabled.
 
 Installation with feature:
 ```toml
 [dependencies]
-benchmark = { version = "0.5.0", features = ["standard"] }
+benchmark = { version = "0.5.8", features = ["standard"] }
 ```
 
 ### Watch
@@ -570,6 +650,8 @@ When compiled with `default-features = false` or without `benchmark`:
 - `measure_named()` returns `(result, Measurement { duration: ZERO, timestamp: 0 })`.
 - `time!` returns `(result, Duration::ZERO)`.
 - `time_named!` returns `(result, Measurement::zero(name))`.
+- `benchmark_block!` executes once and returns `Vec::new()`.
+- `benchmark!` executes once and returns `(Some(result), Vec::new())`.
 - `Collector` and `Stats` are `std`-gated; if `std` is disabled they are not available.
 
 ### Best Practices: Handling 0ns in dashboards
@@ -594,32 +676,237 @@ EXAMPLES
 
 
 <h3 id="rust-benchmark">Rust Benchmark</h3>
-{ADD_DESCRIPTION_HERE}
+Create a minimal Rust benchmark that repeatedly measures a function and reports summary statistics using `Collector`.
 
 ```rust
-// Create a Rust benchmark similar 
-// to Criterion,but using this library 
-//instead of Criterion.
+use benchmark::{Collector, time};
+
+fn fibonacci(n: u64) -> u64 {
+    match n { 0 => 0, 1 => 1, _ => fibonacci(n - 1) + fibonacci(n - 2) }
+}
+
+fn main() {
+    let mut c = Collector::new();
+    for _ in 0..1_000 {
+        let (_, d) = time!(fibonacci(20));
+        c.record_duration("fib20", d);
+    }
+    let s = c.stats("fib20").unwrap();
+    println!("iterations={} mean={}ns min={}ns max={}ns",
+        s.count, s.mean.as_nanos(), s.min.as_nanos(), s.max.as_nanos());
+}
 ```
 
 <br>
 
 <h3 id="code-benchmark">Code Benchmark</h3>
-{ADD_DESCRIPTION_HERE}
+Benchmark a code block by running it many times and collecting per-iteration durations using `benchmark_block!`.
 
 ```rust
-// Create a code (or code block) benchmark
-// stress test using this library where 
-// the benchmark test loops the code 
-// block multiple times (as specified 
-// in the benchmark function arguments).
+use benchmark::benchmark_block;
+
+fn hot() { std::hint::black_box(1 + 1); }
+
+fn main() {
+    // Default 10_000 iterations
+    let samples = benchmark_block!({ hot() });
+    assert_eq!(samples.len(), 10_000);
+
+    // Explicit iterations
+    let n = 5_000usize;
+    let samples2 = benchmark_block!(n, { hot() });
+    println!("n1={} n2={} first={}ns",
+        samples.len(), samples2.len(), samples[0].as_nanos());
+}
+```
+
+<br>
+
+<h3 id="micro-benchmarking">Micro-Benchmarking</h3>
+Measure small inner loops or tight functions; prefer deterministic inputs and avoid global state.
+
+```rust
+use benchmark::{Collector, time};
+
+fn parse_u64(s: &str) -> u64 { s.parse().unwrap_or_default() }
+
+fn main() {
+    let mut c = Collector::new();
+    for _ in 0..50_000 {
+        let (_, d) = time!(parse_u64("123456"));
+        c.record_duration("parse", d);
+    }
+    let s = c.stats("parse").unwrap();
+    println!("count={} mean={}ns", s.count, s.mean.as_nanos());
+}
+```
+
+<br>
+
+<h3 id="macro-benchmarking">Macro-Benchmarking</h3>
+Benchmark an end-to-end path (e.g., request handling). Capture realistic latencies across components.
+
+```rust
+use benchmark::{Collector, time};
+
+fn handle_request() { std::thread::sleep(std::time::Duration::from_millis(3)); }
+
+fn main() {
+    let mut c = Collector::new();
+    for _ in 0..1_000 { let (_, d) = time!(handle_request()); c.record_duration("req", d); }
+    let s = c.stats("req").unwrap();
+    println!("count={} min={}ns max={}ns mean={}ns",
+        s.count, s.min.as_nanos(), s.max.as_nanos(), s.mean.as_nanos());
+}
+```
+
+<br>
+
+<h3 id="ab-benchmark">A/B Benchmark Testing</h3>
+Compare multiple implementations by sampling each separately with identical workloads.
+
+```rust
+use benchmark::Collector;
+
+fn impl_a(buf: &[u8]) -> usize { buf.iter().filter(|b| **b % 2 == 0).count() }
+fn impl_b(buf: &[u8]) -> usize { buf.chunks(2).map(|c| c.len()).sum() }
+
+fn main() {
+    let data = vec![0u8; 4096];
+    let mut ca = Collector::new();
+    let mut cb = Collector::new();
+    for _ in 0..10_000 { let (_, d) = benchmark::time!(impl_a(&data)); ca.record_duration("a", d); }
+    for _ in 0..10_000 { let (_, d) = benchmark::time!(impl_b(&data)); cb.record_duration("b", d); }
+    let sa = ca.stats("a").unwrap();
+    let sb = cb.stats("b").unwrap();
+    println!("A mean={}ns | B mean={}ns", sa.mean.as_nanos(), sb.mean.as_nanos());
+}
+```
+
+<br>
+
+<h3 id="statistical-testing">Benchmark: Statistical Testing</h3>
+Sampling many iterations reduces noise and reveals distribution; compute summary stats.
+
+```rust
+use benchmark::Collector;
+
+fn main() {
+    let mut c = Collector::with_capacity(100_000);
+    for _ in 0..100_000 { let (_, d) = benchmark::time!({ 1 + 1 }); c.record_duration("op", d); }
+    let s = c.stats("op").unwrap();
+    println!("n={} mean={}ns", s.count, s.mean.as_nanos());
+}
+```
+
+<br>
+
+<h3 id="load-testing">Load Testing</h3>
+Generate sustained load to exercise systems and observe tail latency behavior.
+
+```rust
+use benchmark::Collector;
+
+fn io() { std::thread::sleep(std::time::Duration::from_millis(1)); }
+
+fn main() {
+    let mut c = Collector::new();
+    for _ in 0..5_000 { let (_, d) = benchmark::time!(io()); c.record_duration("io", d); }
+    let s = c.stats("io").unwrap();
+    println!("min={}ns p50~{}ns max={}ns", s.min.as_nanos(), s.mean.as_nanos(), s.max.as_nanos());
+}
+```
+
+<br>
+
+<h3 id="code-instrumentation">Code Instrumentation</h3>
+Record production timings with minimal overhead using the `metrics` feature.
+
+```rust
+// Requires: features = ["std", "metrics"]
+use benchmark::{stopwatch, Watch};
+
+let watch = Watch::new();
+stopwatch!(watch, "db.query", {
+    std::thread::sleep(std::time::Duration::from_millis(2));
+});
+println!("count={}", watch.snapshot()["db.query"].count);
+```
+
+<br>
+
+
+<h3 id="distributed-tracing">Distributed Tracing</h3>
+Model spans for sub-operations (e.g., DB, cache, remote call) by naming timers consistently.
+
+```rust
+// Requires: features = ["std", "metrics"]
+use benchmark::{stopwatch, Watch};
+
+let w = Watch::new();
+stopwatch!(w, "req.db", { std::thread::sleep(std::time::Duration::from_millis(1)); });
+stopwatch!(w, "req.cache", { std::thread::sleep(std::time::Duration::from_millis(1)); });
+stopwatch!(w, "req.http", { std::thread::sleep(std::time::Duration::from_millis(2)); });
+```
+
+<br>
+
+<h3 id="real-time-metrics">Real-time Metrics</h3>
+Continuously collect and snapshot percentiles with negligible overhead.
+
+```rust
+// Requires: features = ["std", "metrics"]
+use benchmark::Watch;
+
+let w = Watch::new();
+for _ in 0..1000 { w.record("tick", 500); }
+let s = w.snapshot()["tick"];
+println!("p50={} p99={}", s.p50, s.p99);
+```
+
+<br>
+
+<h3 id="health-check-metrics">Health Check Metrics</h3>
+Track endpoint health like TTFB and response time; alert on SLO breaches.
+
+```rust
+// Requires: features = ["std", "metrics"]
+use benchmark::{stopwatch, Watch};
+
+let watch = Watch::new();
+stopwatch!(watch, "health.ping", {
+    std::thread::sleep(std::time::Duration::from_millis(1));
+});
+let s = watch.snapshot()["health.ping"]; 
+println!("p99={}ns", s.p99);
+```
+
+<br>
+
+<h3 id="apm-integration">APM Integration</h3>
+Export snapshots to your logging/metrics stack periodically.
+
+```rust
+// Requires: features = ["std", "metrics"]
+use benchmark::Watch;
+
+fn export(w: &Watch) {
+    for (name, s) in w.snapshot() {
+        println!(
+            "name={} count={} min={} p50={} p90={} p99={} max={} mean={:.2}",
+            name, s.count, s.min, s.p50, s.p90, s.p99, s.max, s.mean
+        );
+    }
+}
 ```
 
 <br>
 
 
 
-<!-- END EXAMPLES -->
+<!-- 
+:: END EXAMPLES
+============================================================================ -->
 <br>
 <hr>
 <div align="center">

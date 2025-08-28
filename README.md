@@ -120,7 +120,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-benchmark = "0.5.0"
+benchmark = "0.5.8"
 ```
 
 <br>
@@ -132,7 +132,7 @@ benchmark = "0.5.0"
 [dependencies]
 
 # Enables Production & Development.
-benchmark = { version = "0.5.0", features = ["standard"] }
+benchmark = { version = "0.5.8", features = ["standard"] }
 ```
 
 <br>
@@ -142,7 +142,7 @@ benchmark = { version = "0.5.0", features = ["standard"] }
 ```toml
 [dependencies]
 # Disable default features for true zero-overhead
-benchmark = { version = "0.5.0", default-features = false }
+benchmark = { version = "0.5.8", default-features = false }
 ```
 <br>
 
@@ -182,6 +182,45 @@ let (value, duration) = time!({
 });
 assert!(duration.as_nanos() > 0);
 ```
+
+### Micro-benchmark a code block
+Use `benchmark_block!` to run a block many times and get raw per-iteration durations.
+```rust
+use benchmark::benchmark_block;
+
+// Default 10_000 iterations
+let samples = benchmark_block!({
+    // hot path
+    std::hint::black_box(1 + 1);
+});
+assert_eq!(samples.len(), 10_000);
+
+// Explicit iterations
+let samples = benchmark_block!(1_000usize, {
+    std::hint::black_box(2 * 3);
+});
+```
+
+<br>
+
+### Macro-benchmark a named expression
+Use `benchmark!` to run a named expression repeatedly and get `(last, Vec<Measurement>)`.
+```rust
+use benchmark::benchmark;
+
+// Default 10_000 iterations
+let (last, ms) = benchmark!("add", { 2 + 3 });
+assert_eq!(last, Some(5));
+assert_eq!(ms[0].name, "add");
+
+// Explicit iterations
+let (_last, ms) = benchmark!("mul", 77usize, { 6 * 7 });
+assert_eq!(ms.len(), 77);
+```
+
+<small>
+Disabled mode (`default-features = false`): `benchmark_block!` runs once and returns `vec![]`; `benchmark!` runs once and returns `(Some(result), vec![])`.
+</small>
 
 <br>
 

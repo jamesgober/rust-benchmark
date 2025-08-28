@@ -12,7 +12,20 @@
 
 
 
+<br>
 
+## [0.5.8] - 2025-08-28
+
+### Added
+- Macros: `benchmark_block!` and `benchmark!` for statistical benchmarking
+  - `benchmark_block!` returns `Vec<Duration>` per-iteration timings (default 10_000 iterations)
+  - `benchmark!` returns `(Option<T>, Vec<Measurement>)` with a name label
+  - Both support async bodies and have zero-overhead disabled paths
+- Tests: comprehensive coverage for enabled/disabled modes and iteration counts in `tests/macro_tests.rs`
+- Documentation: usage examples and API entries in `README.md`, `docs/API.md`, and `docs/features/BENCHMARK.md`
+
+### Maintenance
+- Ran clippy and rustfmt; confirmed no new lints for the new macros
 
 
 <br>
@@ -31,6 +44,7 @@
 
 ### Removed
 - External dependency on `hdrhistogram` from the `metrics` feature (metrics is now zero-dependency).
+
 
 <br>
 
@@ -106,7 +120,6 @@
 
 <br>
 
-
 ## [0.2.0] - 2025-08-27
 
 ### Added
@@ -136,7 +149,6 @@
 
 <br>
 
-
 ## [0.1.5] - 2025-08-26
 
 Updated pre-dev release for backup.
@@ -156,6 +168,7 @@ Updated pre-dev release for backup.
 ### Removed
 - `VERSION` file.
 
+
 <br>
 
 ## [0.1.0] - 2025-08-19
@@ -168,8 +181,12 @@ Initial pre-dev release for backup.
 - `VERSION` file.
 - `README` file.
 
+
+
+
 [Unreleased]: https://github.com/jamesgober/rust-benchmark/compare/v0.5.7...HEAD
-[0.6.0]: https://github.com/jamesgober/rust-benchmark/compare/v0.5.6...v0.6.0
+[0.6.0]: https://github.com/jamesgober/rust-benchmark/compare/v0.5.8...v0.6.0
+[0.5.8]: https://github.com/jamesgober/rust-benchmark/compare/v0.5.7...v0.5.8
 [0.5.7]: https://github.com/jamesgober/rust-benchmark/compare/v0.5.0...v0.5.7
 [0.5.6]: https://github.com/jamesgober/rust-benchmark/compare/v0.5.0...v0.5.6
 [0.8.0]: https://github.com/jamesgober/rust-benchmark/compare/v0.7.0...v0.8.0
