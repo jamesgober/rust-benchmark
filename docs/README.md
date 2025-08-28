@@ -12,6 +12,22 @@
 </div>
 
 
+## Performance Tests (opt-in)
+
+Perf-sensitive unit tests and benches are skipped by default to avoid host variance. Enable explicitly with both a feature flag and an environment variable:
+
+```bash
+# run perf tests (opt-in)
+PERF_TESTS=1 cargo test -F perf-tests -- --ignored
+
+# run benches that depend on perf gating
+PERF_TESTS=1 cargo bench -F perf-tests
+```
+
+Notes:
+- The `perf-tests` feature gates perf-sensitive paths in tests/benches.
+- The `PERF_TESTS=1` env var is additionally checked inside tests to avoid accidental CI runs.
+
 
 
 

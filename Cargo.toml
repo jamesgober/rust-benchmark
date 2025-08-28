@@ -13,6 +13,9 @@ name    = "benchmark"
 version = "0.5.8"
 edition = "2021"
 
+# Minimum Supported Rust Version (MSRV)
+rust-version = "1.70"
+
 # License
 license = "Apache-2.0"
 

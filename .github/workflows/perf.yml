@@ -1,0 +1,43 @@
+name: Perf
+
+on:
+  schedule:
+    # Sunday 02:00 UTC
+    - cron: "0 2 * * 0"
+    # Wednesday 02:00 UTC
+    - cron: "0 2 * * 3"
+  workflow_dispatch: {}
+
+jobs:
+  perf-tests:
+    name: Perf Tests and Benches
+    runs-on: ubuntu-latest
+    # Only run on main branch for scheduled/manual invocations
+    if: github.ref_name == 'main'
+    concurrency:
+      group: perf-${{ github.ref }}
+      cancel-in-progress: false
+    timeout-minutes: 45
+    env:
+      PERF_TESTS: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+
+      # Optional diagnostics for visibility
+      - name: Environment
+        run: |
+          rustc -Vv
+          cargo -V
+          lscpu || true
+          cat /etc/os-release || true
+
+      - name: Build (all-features) for benches
+        run: cargo build --all-features
+
+      - name: Run perf-gated tests (ignored by default)
+        run: cargo test -F perf-tests -- --ignored
+
+      - name: Run perf-gated benches
+        run: cargo bench -F perf-tests

@@ -50,6 +50,22 @@
 <hr>
 <br>
 
+## Feature Matrix
+
+| Capability / API                  | `std` | `benchmark` | `metrics` | `default` | `standard` | `all` |
+|-----------------------------------|:-----:|:-----------:|:---------:|:---------:|:----------:|:-----:|
+| Core macros: `time!`, `time_named!` |  ✓   |      ✓      |           |     ✓     |     ✓      |   ✓   |
+| Statistical: `benchmark_block!`, `benchmark!` |  ✓ | ✓ |           | ✓ | ✓ | ✓ |
+| Types: `Duration`, `Measurement`, `Stats` | ✓ | ✓ |           | ✓ | ✓ | ✓ |
+| Production metrics: `Watch`, `Timer`, `stopwatch!` | ✓ |           |    ✓    |     –     |     ✓      |   ✓   |
+| Collectors (`Collector`)          |  ✓   |      ✓      |           |     ✓     |     ✓      |   ✓   |
+| No-std core (disabled path)       |  –    |      –      |    –      |     –     |     –      |   –   |
+
+Notes:
+- `default` = `std + benchmark`
+- `standard` = `std + benchmark + metrics`
+- `minimal` implies `--no-default-features` with no extras
+
 
 <!-- DEFAULT FEATURE
 ############################################# -->

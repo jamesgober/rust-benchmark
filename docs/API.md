@@ -11,6 +11,9 @@
 
 <br>
 
+> Note: Perf-sensitive tests/benches are skipped by default. To opt in, run with feature `perf-tests` and env `PERF_TESTS=1`. See "Performance Tests (opt-in)" below.
+
+
 ## Table of Contents
 - [Installation](#installation)
 - [Features](#features)
@@ -34,6 +37,8 @@
 - [Async Usage](#async-usage)
 - [Disabled Mode Behavior](#disabled-mode-behavior)
   - [Best Practices: Handling 0ns in dashboards](#best-practices-handling-0ns-in-dashboards)
+- [Doctests and feature flags](#doctests-and-feature-flags)
+- [Performance Tests (opt-in)](#performance-tests-opt-in)
 - [Examples](#examples)
   - [Rust Benchmark](#rust-benchmark)
   - [Code Benchmark](#code-benchmark)
@@ -902,9 +907,39 @@ fn export(w: &Watch) {
 
 <br>
 
+## Doctests and feature flags
+Some examples require specific features to compile under doctest or when copy-pasted:
+
+- `Collector`, `Stats`, `time_named!`: Requires `features = ["std", "benchmark"]`.
+- `Watch`, `Timer`, `stopwatch!`: Requires `features = ["std", "metrics"]`.
+
+When running doctests locally with docs.rs-like configuration, consider enabling all features:
+
+```bash
+RUSTDOCFLAGS="--cfg docsrs" cargo test --doc --all-features
+```
+
+Alternatively, gate your local snippets with cfgs when experimenting.
+
+<br>
+
+## Performance Tests (opt-in)
+Perf-sensitive tests/benches are gated to avoid noisy CI variance. Opt in explicitly:
+
+```bash
+# run perf tests (ignored by default)
+PERF_TESTS=1 cargo test -F perf-tests -- --ignored
+
+# run benches that exercise perf paths
+PERF_TESTS=1 cargo bench -F perf-tests
+```
+
+Notes:
+- The `perf-tests` feature gates perf-sensitive code in tests/benches.
+- Tests also check `PERF_TESTS` at runtime and will early-exit when not set.
 
 
-<!-- 
+<!--
 :: END EXAMPLES
 ============================================================================ -->
 <br>

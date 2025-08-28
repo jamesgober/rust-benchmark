@@ -10,16 +10,13 @@
 </h1>
 <div align="center">
     <a href="https://crates.io/crates/benchmark"><img alt="Crates.io" src="https://img.shields.io/crates/v/benchmark"></a>
-    <span>&nbsp;</span>
     <a href="https://crates.io/crates/benchmark" alt="Download benchmark"><img alt="Crates.io Downloads" src="https://img.shields.io/crates/d/benchmark?color=%230099ff"></a>
-    <span>&nbsp;</span>
     <a href="https://docs.rs/benchmark" title="Benchmark Documentation"><img alt="docs.rs" src="https://img.shields.io/docsrs/benchmark"></a>
-    <span>&nbsp;</span>
     <a href="https://github.com/jamesgober/rust-benchmark/actions"><img alt="GitHub CI" src="https://github.com/jamesgober/rust-benchmark/actions/workflows/ci.yml/badge.svg"></a>
-    <span>&nbsp;</span>
     <a href="https://github.com/jamesgober/rust-benchmark/actions/workflows/bench.yml" title="Benchmarks Workflow"><img alt="Benchmarks" src="https://github.com/jamesgober/rust-benchmark/actions/workflows/bench.yml/badge.svg"></a>
+    <a href="https://github.com/rust-lang/rfcs/blob/master/text/2495-min-rust-version.md" title="MSRV"><img alt="MSRV" src="https://img.shields.io/badge/MSRV-1.70%2B-blue"></a>
 </div>
-
+<br>
 <p>
     Nanosecond-precision benchmarking for <b>development</b>, <b>testing</b>, and <b>production</b>.
     The <b>core timing path</b> is <b>zero-overhead</b> when disabled, while optional, std-powered
@@ -50,7 +47,6 @@
     <li><a href="./docs/BENCHMARK.md#ci-cd-integration"><b>CI/CD Integration</b></a>: Detect performance regressions in your deployment pipeline.</li>
     <li><a href="./docs/BENCHMARK.md#load-testing"><b>Load Testing</b></a>: Simulate realistic traffic patterns and stress test your code.</li>
 </ul>
-<br>
 <p>
   &mdash; See <a href="./docs/BENCHMARK.md"><b>Benchmark Documentation</b></a> for more information.
 </p>
@@ -70,8 +66,6 @@
     <li><a href="./docs/METRICS.md#health-check-metrics"><b>Health Check Metrics</b></a>: Monitor TTFB, response times, and system health.</li>
     <li><a href="./docs/METRICS.md#apm-integration"><b>APM Integration</b></a>: Core observability tooling for application performance monitoring.</li>
 </ul>
-
-<br>
 <p>
    &mdash; See <a href="./docs/METRICS.md"><b>Metrics Documentation</b></a> for more information.
 </p>
