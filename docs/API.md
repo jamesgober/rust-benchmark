@@ -8,6 +8,19 @@
     </sub>
     <br>
 </h1>
+<div align="center">
+    <sup>
+        <a href="../README.md" title="Project Home"><b>HOME</b></a>
+        <span>&nbsp;│&nbsp;</span>
+        <a href="./README.md" title="Project Documentation"><b>DOCS</b></a>
+        <span>&nbsp;│&nbsp;</span>
+        <a href="./features/README.md" title="Feature Flags"><b>FEATURES</b></a>
+        <span>&nbsp;│&nbsp;</span>
+        <a href="./BENCHMARK.md" title="Performance Benchmark"><b>BENCHMARK</b></a>
+        <span>&nbsp;│&nbsp;</span>
+        <a href="./METRICS.md" title="Performance Metrics"><b>METRICS</b></a>
+    </sup>
+</div>
 
 <br>
 
@@ -117,7 +130,7 @@ cargo add benchmark --no-default-features
 - `minimal`: minimal build with core timing only (*no default features*)
 - `all`: Activates all features (*includes: `std + benchmark + metrics`*)
 
-See [**`FEATURES DOCUMENTATION`**](./features/README.md) for more information.
+&mdash; See [**`FEATURES DOCUMENTATION`**](./features/README.md) for more information.
 
 <br>
 

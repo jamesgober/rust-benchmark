@@ -60,9 +60,6 @@
             </li>
         </ul>
     </li>
-    <li>
-        <a href="#tbd"><b>link</b></a>
-    </li>
 </ul>
 
 <hr>
