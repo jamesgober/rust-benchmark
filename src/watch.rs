@@ -5,20 +5,19 @@ use std::fmt;
 use std::sync::{Arc, RwLock};
 use std::time::Instant;
 
-use hdrhistogram::Histogram;
+use crate::histogram::Histogram;
 
 /// Default lowest discernible value (1ns)
 const DEFAULT_LOWEST: u64 = 1;
 /// Default highest trackable value (~1 hour in ns)
 const DEFAULT_HIGHEST: u64 = 3_600_000_000_000;
-/// Default significant figures for histogram
-const DEFAULT_SIGFIG: u8 = 3;
+// Note: precision is fixed internally for performance; no configurable sigfig.
 
 /// Central, thread-safe metrics collector for production timing.
 ///
-/// Holds per-metric `HdrHistogram` instances and provides efficient recording
-/// and percentile queries via `snapshot()`. Cheap to clone, safe to share
-/// across threads and async tasks.
+/// Holds per-metric internal `Histogram` instances and provides efficient
+/// recording and percentile queries via `snapshot()`. Cheap to clone, safe to
+/// share across threads and async tasks.
 #[derive(Clone)]
 pub struct Watch {
     inner: Arc<Inner>,
@@ -32,10 +31,10 @@ impl Default for Watch {
 }
 
 struct Inner {
-    hist: RwLock<HashMap<String, Histogram<u64>>>,
+    // Store Arc<Histogram> to allow lock-free record on hot path
+    hist: RwLock<HashMap<String, Arc<Histogram>>>,
     lowest: u64,
     highest: u64,
-    sigfig: u8,
 }
 
 /// Snapshot stats for a single metric.
@@ -75,7 +74,7 @@ impl fmt::Debug for Watch {
 impl Watch {
     /// Create a new Watch with sensible defaults.
     pub fn new() -> Self {
-        Self::with_bounds(DEFAULT_LOWEST, DEFAULT_HIGHEST, DEFAULT_SIGFIG)
+        Self::with_bounds(DEFAULT_LOWEST, DEFAULT_HIGHEST)
     }
 
     /// Create a builder to configure histogram bounds and precision.
@@ -84,21 +83,18 @@ impl Watch {
         WatchBuilder::new()
     }
 
-    /// Create a Watch with custom histogram bounds and precision.
+    /// Create a Watch with custom histogram bounds.
     ///
     /// `lowest_discernible`: smallest value discernible (ns)
     /// `highest_trackable`: largest value tracked (ns)
-    /// `sigfig`: 1-5
-    pub fn with_bounds(lowest_discernible: u64, highest_trackable: u64, sigfig: u8) -> Self {
+    pub fn with_bounds(lowest_discernible: u64, highest_trackable: u64) -> Self {
         let lowest = lowest_discernible.max(1);
         let highest = highest_trackable.max(lowest + 1);
-        let sigfig = sigfig.clamp(1, 5);
         Self {
             inner: Arc::new(Inner {
                 hist: RwLock::new(HashMap::new()),
                 lowest,
                 highest,
-                sigfig,
             }),
         }
     }
@@ -113,31 +109,22 @@ impl Watch {
         // Clamp to histogram range to avoid errors.
         let ns = duration_ns.clamp(self.inner.lowest, self.inner.highest);
 
-        // Fast path: try read lock first to avoid writer when key exists.
+        // Fast path: try obtain Arc without write locking
         if let Ok(map) = self.inner.hist.read() {
-            let exists = map.contains_key(name);
-            drop(map);
-            if exists {
-                let mut map_w = self.inner.hist.write().expect("watch write lock poisoned");
-                if let Some(h2) = map_w.get_mut(name) {
-                    let _ = h2.record(ns);
-                    return;
-                }
-                // If it disappeared, fall through to create.
+            if let Some(h) = map.get(name) {
+                h.record(ns);
+                return;
             }
         }
 
-        // Slow path: create or update under write lock.
+        // Slow path: create the histogram under write lock if absent
         let mut map = self.inner.hist.write().expect("watch write lock poisoned");
-        let entry = map.entry(name.to_string()).or_insert_with(|| {
-            Histogram::<u64>::new_with_bounds(
-                self.inner.lowest,
-                self.inner.highest,
-                self.inner.sigfig,
-            )
-            .expect("valid histogram bounds")
-        });
-        let _ = entry.record(ns);
+        let h = map
+            .entry(name.to_string())
+            .or_insert_with(|| Arc::new(Histogram::new()))
+            .clone();
+        drop(map);
+        h.record(ns);
     }
 
     /// Record elapsed time since `start` for a metric name.
@@ -157,15 +144,16 @@ impl Watch {
     /// # Panics
     /// Panics if the internal lock is poisoned from a prior panic.
     pub fn snapshot(&self) -> HashMap<String, WatchStats> {
-        let clones: Vec<(String, Histogram<u64>)> = {
+        let items: Vec<(String, Arc<Histogram>)> = {
             let map = self.inner.hist.read().expect("watch read lock poisoned");
-            map.iter().map(|(k, v)| (k.clone(), v.clone())).collect()
+            map.iter()
+                .map(|(k, v)| (k.clone(), Arc::clone(v)))
+                .collect()
         };
 
-        let mut out = HashMap::with_capacity(clones.len());
-        for (name, h) in clones {
-            // Guard against empty histograms.
-            let count = h.len();
+        let mut out = HashMap::with_capacity(items.len());
+        for (name, h) in items {
+            let count = h.count();
             if count == 0 {
                 out.insert(
                     name,
@@ -184,14 +172,15 @@ impl Watch {
                 continue;
             }
 
-            let min = h.min();
-            let max = h.max();
-            let p50 = h.value_at_percentile(50.0);
-            let p90 = h.value_at_percentile(90.0);
-            let p95 = h.value_at_percentile(95.0);
-            let p99 = h.value_at_percentile(99.0);
-            let p999 = h.value_at_percentile(99.9);
-            let mean = h.mean();
+            // Safe unwraps since count > 0
+            let min = h.min().unwrap_or(0);
+            let max = h.max().unwrap_or(0);
+            let p50 = h.percentile(0.50).unwrap_or(min);
+            let p90 = h.percentile(0.90).unwrap_or(max);
+            let p95 = h.percentile(0.95).unwrap_or(max);
+            let p99 = h.percentile(0.99).unwrap_or(max);
+            let p999 = h.percentile(0.999).unwrap_or(max);
+            let mean = h.mean().unwrap_or(0.0);
 
             out.insert(
                 name,
@@ -235,7 +224,6 @@ impl Watch {
 pub struct WatchBuilder {
     lowest: u64,
     highest: u64,
-    sigfig: u8,
 }
 
 impl Default for WatchBuilder {
@@ -252,7 +240,6 @@ impl WatchBuilder {
         Self {
             lowest: DEFAULT_LOWEST,
             highest: DEFAULT_HIGHEST,
-            sigfig: DEFAULT_SIGFIG,
         }
     }
 
@@ -272,20 +259,11 @@ impl WatchBuilder {
         self
     }
 
-    /// Set the number of significant figures for histogram (1..=5).
-    #[inline]
-    #[must_use]
-    pub fn sigfig(mut self, sigfig: u8) -> Self {
-        self.sigfig = sigfig.clamp(1, 5);
-        self
-    }
-
     /// Build the `Watch` with the configured settings.
     #[inline]
     pub fn build(self) -> Watch {
         let lowest = self.lowest.max(1);
         let highest = self.highest.max(lowest + 1);
-        let sigfig = self.sigfig.clamp(1, 5);
-        Watch::with_bounds(lowest, highest, sigfig)
+        Watch::with_bounds(lowest, highest)
     }
 }

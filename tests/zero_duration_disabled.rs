@@ -1,7 +1,7 @@
-#![cfg(not(feature = "enabled"))]
+#![cfg(not(feature = "benchmark"))]
 
 // Integration test asserting zero-duration behavior end-to-end
-// when the 'enabled' feature is disabled.
+// when the 'benchmark' feature is disabled.
 
 use benchmark::{measure, measure_named, time, time_named, Duration};
 

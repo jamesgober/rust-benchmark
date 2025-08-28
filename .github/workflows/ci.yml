@@ -76,7 +76,7 @@ jobs:
           - ""               # no default features (no_std build)
           - "minimal"        # minimal feature
           - "std"            # std only
-          - "full"           # std + enabled
+          - "all"           # std + benchmark
 
     steps:
       - name: Checkout code
@@ -111,10 +111,10 @@ jobs:
           cargo build --release --lib --no-default-features
           cp target/release/libbenchmark.rlib libbenchmark_disabled.rlib || true
 
-      - name: Build enabled (rlib)
+      - name: Build benchmark (rlib)
         run: |
           cargo clean
-          cargo build --release --lib --features "enabled"
+          cargo build --release --lib --features "benchmark"
           cp target/release/libbenchmark.rlib libbenchmark_enabled.rlib || true
 
       - name: Dump symbols and disassembly (GNU objdump)
@@ -224,7 +224,7 @@ jobs:
 
       - name: Build with benchmarking
         run: |
-          cargo build --release --lib --features "enabled"
+          cargo build --release --lib --features "benchmark"
           if [ -f target/release/libbenchmark.rlib ]; then
             mv target/release/libbenchmark.rlib target/release/libbenchmark_enabled.rlib
           else
@@ -269,9 +269,9 @@ jobs:
       - name: Test documentation examples
         run: cargo test --workspace --all-features --doc
 
-  # Build benches and examples across feature modes to catch regressions
-  build-benches-examples:
-    name: Build benches/examples (all feature modes)
+  # Build benchmark and examples across feature modes to catch regressions
+  build-benchmark-examples:
+    name: Build benchmark/examples (all feature modes)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -323,11 +323,11 @@ jobs:
           # Test zero-overhead claim
           echo "Testing zero-overhead when disabled..."
           cargo build --release --no-default-features
-          cargo build --release --features "enabled"
+          cargo build --release --features "benchmark"
           
           # Run actual benchmarks if they exist
           if [ -d "benches" ]; then
-            cargo bench --features "full" -- --output-format bencher | tee output.txt
+            cargo bench --features "all" -- --output-format bencher | tee output.txt
           else
             echo "No benchmarks found, skipping..."
           fi
@@ -397,4 +397,4 @@ jobs:
         run: cargo check --lib --no-default-features --features "minimal"
 
       - name: Check MSRV compatibility (standard features)
-        run: cargo check --lib --features "full"
+        run: cargo check --lib --features "all"

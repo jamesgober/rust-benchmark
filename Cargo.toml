@@ -10,7 +10,7 @@
 #╚═══════════╩══════════════════════════════════╩════════════╝
 [package]
 name    = "benchmark"
-version = "0.5.0"
+version = "0.5.7"
 edition = "2021"
 
 # License
@@ -22,7 +22,7 @@ repository    = "https://github.com/jamesgober/rust-benchmark"
 documentation = "https://docs.rs/benchmark"
 
 # Description
-description = "Nanosecond-precision benchmarking for dev, testing, and production. Zero-overhead core timing when disabled; optional std-powered collectors and hdrhistogram-based metrics (Watch/Timer) for real service observability."
+description = "Nanosecond-precision benchmarking for dev, testing, and production. Zero-overhead core timing when disabled; optional std-powered collectors and zero-dependency metrics (Watch/Timer) for real service observability."
 
 # Keywords (5 total)
 keywords = [
@@ -50,16 +50,19 @@ authors = [
 #║ ⚙️ FEATURES
 #╚═══════════════════════════════════════════════════════════╝
 [features]
-enabled  = [] # Benchmarking enabled (can be disabled for true zero-overhead).
-std      = [] # Use the Rust standard library (disables no_std).
+
+# Standard Features
+std         = [] # Use the Rust standard library (disables no_std).
+benchmark   = [] # Benchmarking enabled (can be disabled for true zero-overhead).
+metrics     = ["std"] # Use production metrics (Watch/Timer) and Rust standard library
+# Gate perf-sensitive unit tests/benches so they can be opted into explicitly
+perf-tests  = []
 
 # Feature Combinations
 minimal  = [] # Minimal build with core timing only (no default features).
-default  = ["std", "enabled"] # Default features (includes std and enabled).
-metrics  = ["dep:hdrhistogram", "std"] # Optional production metrics (Watch/Timer), keeps zero-deps by default.
-full     = ["dep:hdrhistogram", "std", "enabled"] # Full build with all features enabled.
-base     = ["dep:hdrhistogram", "std", "enabled"] # Base build with standard features enabled.
-none     = [] # No Features.
+default  = ["std", "benchmark"] # Default features (includes std and benchmark).
+standard = ["metrics", "benchmark"] # Default features (includes std and benchmark).
+all      = ["std", "benchmark", "metrics"] # Complete build with all features enabled.
 
 
 
@@ -80,7 +83,6 @@ harness = false
 #║ 🧩 DEPENDENCIES
 #╚═══════════════════════════════════════════════════════════╝
 [dependencies]
-hdrhistogram = { version = "7", optional = true }
 
 
 

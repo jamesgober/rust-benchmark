@@ -11,13 +11,13 @@ fn test_basic_timing() {
 
     assert_eq!(result, 42);
 
-    #[cfg(feature = "enabled")]
+    #[cfg(feature = "benchmark")]
     {
         // Should take at least 1ms
         assert!(duration.as_millis() >= 1);
     }
 
-    #[cfg(not(feature = "enabled"))]
+    #[cfg(not(feature = "benchmark"))]
     {
         // Should be zero when disabled
         assert_eq!(duration.as_nanos(), 0);
@@ -29,13 +29,13 @@ fn test_time_macro() {
     let (result, duration) = time!(2 + 2);
     assert_eq!(result, 4);
 
-    #[cfg(feature = "enabled")]
+    #[cfg(feature = "benchmark")]
     {
-        // Touch duration so it's used under enabled without triggering lints
+        // Touch duration so it's used under benchmark without triggering lints
         let _ = duration.as_nanos();
     }
 
-    #[cfg(not(feature = "enabled"))]
+    #[cfg(not(feature = "benchmark"))]
     assert_eq!(duration.as_nanos(), 0);
 }
 

@@ -12,6 +12,26 @@
 
 
 
+
+
+
+<br>
+
+## [0.5.7] - 2025-08-28
+
+
+### Added
+- Changelog entry documenting histogram migration and zero-dependency metrics.
+
+### Changed
+- Metrics feature now uses built-in, zero-dependency histogram (`src/histogram.rs`) instead of `hdrhistogram`.
+- `src/watch.rs`: refactored to store `Arc<Histogram>` per metric, lock-free recording on hot path, and updated `snapshot()` to internal API.
+- `Cargo.toml`: removed `hdrhistogram` dependency and references from features; updated description; `all` now includes `metrics`.
+- Documentation updated to reflect internal histogram: `README.md`, `docs/API.md`, `docs/features/METRICS.md`.
+
+### Removed
+- External dependency on `hdrhistogram` from the `metrics` feature (metrics is now zero-dependency).
+
 <br>
 
 ## [0.5.6] - 2025-08-27
@@ -37,13 +57,10 @@
   - `stopwatch!` macro for ergonomic timing (sync and async blocks)
 - Documentation updates for metrics API (`docs/API.md`, `README.md`).
 - Unit and async tests covering `Watch`, `Timer`, and `stopwatch!` macro.
+- New builder API: `Watch::builder()` with `WatchBuilder` (implements `Default`) and `#[must_use]` on fluent setters.
 
 ### Fixed
 - Corrected `hdrhistogram` dependency declaration: removed non-existent `std` feature.
-
-
-
-
 
 
 <br>
@@ -151,8 +168,9 @@ Initial pre-dev release for backup.
 - `VERSION` file.
 - `README` file.
 
-[Unreleased]: https://github.com/jamesgober/rust-benchmark/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/jamesgober/rust-benchmark/compare/v0.5.7...HEAD
 [0.6.0]: https://github.com/jamesgober/rust-benchmark/compare/v0.5.6...v0.6.0
+[0.5.7]: https://github.com/jamesgober/rust-benchmark/compare/v0.5.0...v0.5.7
 [0.5.6]: https://github.com/jamesgober/rust-benchmark/compare/v0.5.0...v0.5.6
 [0.8.0]: https://github.com/jamesgober/rust-benchmark/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/jamesgober/rust-benchmark/compare/v0.5.0...v0.7.0

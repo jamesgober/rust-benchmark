@@ -32,6 +32,9 @@
 - [Async Usage](#async-usage)
 - [Disabled Mode Behavior](#disabled-mode-behavior)
   - [Best Practices: Handling 0ns in dashboards](#best-practices-handling-0ns-in-dashboards)
+- [Examples](#examples)
+  - [Rust Benchmark](#rust-benchmark)
+  - [Code Benchmark](#code-benchmark)
 
 <br><br>
 
@@ -60,11 +63,35 @@ benchmark = { version = "0.5.0", default-features = false }
 cargo add benchmark
 ```
 
+<p>
+  <b>⚠️ NOTE:</b> By default, <b><a href="./docs/PROD.md">production-level</a></b> benchmark features for <i>performance metrics</i> are disabled.
+  <br>
+  <br>
+  Use the <b><code>metrics</code></b> feature to enable the <b>production features</b>, or use the <b><code>standard</code></b> feature for to enable <i>all benchmark features</i> including  <code>development</code> and <code>production</code>. 
+</p>
+
+#### Install via Terminal
+```bash
+# Basic installation (benchmarking feature only)
+cargo add benchmark
+```
+
+
+### Install via Terminal
+```bash
+# Basic installation (benchmarking feature only)
+cargo add benchmark
+```
+
 #### Terminal: Disable Default Features
 ```bash
 # Explicitly disabled - zero overhead
 cargo add benchmark --no-default-features
 ```
+
+
+
+See [**`FEATURES DOCUMENTATION`**](./features/README.md) for more information.
 
 <hr>
 <br>
@@ -74,12 +101,16 @@ cargo add benchmark --no-default-features
 
 
 ## Features
-
-- `enabled` (default): enables measurement (otherwise compiles to zero-overhead no-ops)
+- `none` (optional): no features.
 - `std` (default): uses Rust standard library; disables `no_std`
-- `metrics` (optional): production metrics (`Watch`, `Timer`, `stopwatch!`) using `hdrhistogram`
-- `minimal`: minimal build with core timing only (no default features)
-- `full`: convenience feature equal to `std + enabled`
+- `benchmark` (default): enables default benchmark measurement.
+- `metrics` (optional): production/live metrics (`Watch`, `Timer`, `stopwatch!`).
+- `default`: convenience feature equal to `std + benchmark`
+- `standard`: convenience feature equal to `std + benchmark + metrics`
+- `minimal`: minimal build with core timing only (*no default features*)
+- `all`: Activates all features (*includes: `std + benchmark + metrics`*)
+
+See [**`FEATURES DOCUMENTATION`**](./features/README.md) for more information.
 
 <br>
 
@@ -184,7 +215,7 @@ assert_eq!(result, 4);
 ```
 
 - Enabled path: high-resolution timer via `std::time::Instant`.
-- Disabled path (`!enabled`): returns `Duration::ZERO`.
+- Disabled path (`!benchmark`): returns `Duration::ZERO`.
 - Overhead: designed to be minimal and competitive with direct `Instant` usage.
 
 <br>
@@ -201,7 +232,7 @@ assert_eq!(m.name, "add");
 ```
 
 - Timestamp set to UNIX epoch nanos (0 under Miri/isolation).
-- Disabled path (`!enabled`): returns `Measurement { duration: ZERO, timestamp: 0 }`.
+- Disabled path (`!benchmark`): returns `Measurement { duration: ZERO, timestamp: 0 }`.
 
 <br>
 
@@ -217,7 +248,7 @@ let (result, dur) = time!(2 + 2);
 assert_eq!(result, 4);
 ```
 
-Async example (requires `features = ["std", "enabled"]`):
+Async example (requires `features = ["std", "benchmark"]`):
 ```rust
 use benchmark::time;
 
@@ -281,11 +312,11 @@ Provides production-friendly timing and percentile statistics with negligible ov
 Installation with feature:
 ```toml
 [dependencies]
-benchmark = { version = "0.5.0", features = ["std", "enabled", "metrics"] }
+benchmark = { version = "0.5.0", features = ["standard"] }
 ```
 
 ### Watch
-Thread-safe collector of nanosecond timings using `hdrhistogram` under the hood.
+Thread-safe collector of nanosecond timings using a built-in, zero-dependency histogram under the hood.
 
 ```rust
 use benchmark::Watch; // requires features = ["std", "metrics"]
@@ -297,7 +328,7 @@ let s = &stats["db.query"];
 assert!(s.p99 >= s.p50);
 ```
 
-- Methods: `new()`, `builder() -> WatchBuilder`, `with_bounds(lowest, highest, sigfig)`, `record(name, ns)`, `record_instant(name, start)`, `snapshot()`, `clear()`, `clear_name(name)`
+- Methods: `new()`, `builder() -> WatchBuilder`, `with_bounds(lowest, highest)`, `record(name, ns)`, `record_instant(name, start)`, `snapshot()`, `clear()`, `clear_name(name)`
 - Concurrency: `Watch` is cheap to clone and `Send + Sync`.
 
 ### Timer
@@ -345,10 +376,11 @@ async fn main() {
 Notes:
 - Percentiles are computed from histograms cloned outside locks for low contention.
 - Durations are clamped to histogram bounds; defaults cover 1ns..~1h.
+- Internal histogram: fixed-size, lock-free recording with nanosecond precision; zero external dependencies.
 
 ### Examples and Use-cases
 
-The snippets below assume `features = ["std", "enabled", "metrics"]`.
+The snippets below assume `features = ["standard"]`.
 
 #### Real service loop (Tokio)
 Record per-iteration latency and export periodically.
@@ -450,11 +482,10 @@ Set bounds to your SLOs to reduce memory and improve precision.
 ```rust
 use benchmark::Watch;
 
-// Builder: 100ns to 10s with 3 significant figures
+// Builder: 100ns to 10s (fixed precision internally)
 let watch = Watch::builder()
     .lowest(100)
     .highest(10_000_000_000)
-    .sigfig(3)
     .build();
 watch.record("op", 250);
 ```
@@ -487,22 +518,64 @@ fn export(w: &Watch) {
 }
 ```
 
+JSON export example (using serde_json):
+```rust
+// Add to Cargo.toml
+// serde = { version = "1", features = ["derive"] }
+// serde_json = "1"
+use benchmark::Watch;
+use serde::Serialize;
+
+#[derive(Serialize)]
+struct MetricRow<'a> {
+    name: &'a str,
+    count: u64,
+    min: u64,
+    p50: u64,
+    p90: u64,
+    p95: u64,
+    p99: u64,
+    p999: u64,
+    max: u64,
+    mean: f64,
+}
+
+fn export_json(w: &Watch) -> String {
+    let mut rows = Vec::new();
+    for (name, s) in w.snapshot() {
+        rows.push(MetricRow {
+            name: &name,
+            count: s.count,
+            min: s.min,
+            p50: s.p50,
+            p90: s.p90,
+            p95: s.p95,
+            p99: s.p99,
+            p999: s.p999,
+            max: s.max,
+            mean: s.mean,
+        });
+    }
+    serde_json::to_string_pretty(&rows).unwrap()
+}
+```
+
 #### Contention tips
 - Clone `Watch` freely and pass by value to tasks/threads.
 - Use stable, low-cardinality metric names to keep the map small.
 - If extremely hot, consider sharding names (e.g., per-core suffix) and merging snapshots offline.
 
 ## Async Usage
-The macros inline timing using `std::time::Instant` under `features = ["std", "enabled"]` and fully support `await` inside the macro body. They can be used with any async runtime (Tokio, async-std, etc.).
+The macros inline timing using `std::time::Instant` under `features = ["std", "benchmark"]` and fully support `await` inside the macro body. They can be used with any async runtime (Tokio, async-std, etc.).
 
 Notes:
-- When `enabled` is off, macros return zero durations but still evaluate expressions.
+- When `benchmark` is off, macros return zero durations but still evaluate expressions.
 - Avoid holding locks across awaited code within your own operations.
 
 <br>
 
 ## Disabled Mode Behavior
-When compiled with `default-features = false` or without `enabled`:
+When compiled with `default-features = false` or without `benchmark`:
 - `measure()` returns `(result, Duration::ZERO)`.
 - `measure_named()` returns `(result, Measurement { duration: ZERO, timestamp: 0 })`.
 - `time!` returns `(result, Duration::ZERO)`.
@@ -515,6 +588,53 @@ When compiled with `default-features = false` or without `enabled`:
 - Consider filtering 0ns when computing percentiles for SLO charts if they represent measurement granularity rather than business latency.
 - If you need to avoid zeros in histograms, clamp on export, not at collection: `max(value, 1)`. Keep raw storage exact for audits.
 
+<br>
+
+
+<!--
+EXAMPLES
+######################################### -->
+<br>
+<div align="center">
+  <a href="#top">&uarr;<br>TOP</a>
+</div>
+<hr>
+
+<h2 id="examples">Examples</h2>
+
+
+<h3 id="rust-benchmark">Rust Benchmark</h3>
+{ADD_DESCRIPTION_HERE}
+
+```rust
+// Create a Rust benchmark similar 
+// to Criterion,but using this library 
+//instead of Criterion.
+```
+
+<br>
+
+<h3 id="code-benchmark">Code Benchmark</h3>
+{ADD_DESCRIPTION_HERE}
+
+```rust
+// Create a code (or code block) benchmark
+// stress test using this library where 
+// the benchmark test loops the code 
+// block multiple times (as specified 
+// in the benchmark function arguments).
+```
+
+<br>
+
+
+
+<!-- END EXAMPLES -->
+<br>
+<hr>
+<div align="center">
+  <a href="#top">&uarr;<br>TOP</a>
+</div>
 <br>
 
 <!--

@@ -23,11 +23,60 @@
 <p>
     Nanosecond-precision benchmarking for <b>development</b>, <b>testing</b>, and <b>production</b>.
     The <b>core timing path</b> is <b>zero-overhead</b> when disabled, while optional, std-powered
-    <b>collectors</b> and <b>hdrhistogram-based metrics</b> (<code>Watch</code>/<code>Timer</code> and the
+    <b>collectors</b> and <b>zero-dependency metrics</b> (<code>Watch</code>/<code>Timer</code> and the
     <code>stopwatch!</code> macro) provide real <b>service observability</b> with percentiles in production.
     Designed to be embedded in performance-critical code without bloat or footguns.
   </p>
 
+
+<br>
+
+<h2>What is Benchmark?</h2>
+<p>
+<strong>Benchmark</strong> is a comprehensive benchmarking suite with an advanced performance metrics module that functions in two distinct contexts:
+
+<h3>1: As a Development Tool:</h3>
+<p>
+  The <strong>Benchmarking Suite</strong> is a <b>statistical benchmarking framework</b> for performance testing and optimization during development. This suite provides the tools for <b>statistical microbenchmarking and comparative analysis</b>, allowing you to <b>detect performance regressions in CI</b> and <b>make data-driven implementation choices during development</b>.
+</p>
+
+<h4>Benchmarking Suite Features</h4>
+<p>A lightweight, ergonomic alternative to Criterion for statistical performance testing:</p>
+<ul>
+    <li><a href="./docs/BENCHMARK.md#micro-benchmarking"><b>Micro-Benchmarking</b></a>: Test isolated code blocks with the <code>benchmark_block!</code> macro.</li>
+    <li><a href="./docs/BENCHMARK.md#macro-benchmarking"><b>Macro-Benchmarking</b></a>: Test entire functions or modules with the <code>benchmark!</code> macro.</li>
+    <li><a href="./docs/BENCHMARK.md#comparative-analysis"><b>Comparative Analysis</b></a>: A/B test multiple implementations to make data-driven optimization decisions.</li>
+    <li><a href="./docs/BENCHMARK.md#statistical-sampling"><b>Statistical Sampling</b></a>: Runs code repeatedly to generate robust performance statistics.</li>
+    <li><a href="./docs/BENCHMARK.md#ci-cd-integration"><b>CI/CD Integration</b></a>: Detect performance regressions in your deployment pipeline.</li>
+    <li><a href="./docs/BENCHMARK.md#load-testing"><b>Load Testing</b></a>: Simulate realistic traffic patterns and stress test your code.</li>
+</ul>
+<br>
+<p>
+   🔗 See <a href="./docs/BENCHMARK.md"><b>Benchmark Documentation</b></a> for more information.
+</p>
+
+<br>
+
+<h3>2: As a Production Tool:</h3>
+<p>
+  The <strong>performance metrics</strong> module serves as an advanced, lightweight <b>application performance monitoring (APM)</b> tool that provides seemless production observability. It allows you to instrument your application to capture <b>real-time performance metrics</b> for critical operations like database queries and API response times. Each timing measurement can be thought of as a span, helping you identify bottlenecks in a live system.
+</p>
+<h4>Performance Metrics Features</h4>
+<p>Low-overhead instrumentation for live application monitoring:</p>
+<ul>
+    <li><a href="./docs/METRICS.md#code-instrumentation"><b>Code Instrumentation</b></a>: Add performance timers to production code with minimal overhead!</li>
+    <li><a href="./docs/METRICS.md#distributed-tracing"><b>Distributed Tracing</b></a>: Break down complex operations into spans (database queries, API calls, etc.).</li>
+    <li><a href="./docs/METRICS.md#real-time-metrics"><b>Real-time Metrics</b></a>: Capture every operation's performance data, not statistical averages.</li>  
+    <li><a href="./docs/METRICS.md#health-check-metrics"><b>Health Check Metrics</b></a>: Monitor TTFB, response times, and system health.</li>
+    <li><a href="./docs/METRICS.md#apm-integration"><b>APM Integration</b></a>: Core observability tooling for application performance monitoring.</li>
+</ul>
+
+<br>
+<p>
+   🔗 See <a href="./docs/METRICS.md"><b>Metrics Documentation</b></a> for more information.
+</p>
+
+<hr>
 <br>
 
 <h2>Features</h2>
@@ -38,14 +87,33 @@
     <li><b>Async Compatible:</b> Works seamlessly with any async runtime (<code>Tokio</code>, <code>async-std</code>, etc.) without special support or additional features - just time any expression, sync or async.</li>
     <li><b>Nanosecond Precision:</b> Uses platform-specific high-resolution timers through <code>std::time::Instant</code>, providing nanosecond-precision measurements with monotonic guarantees.</li>
     <li><b>Simple Statistics:</b> Provides essential statistics (<code>count</code>, <code>total</code>, <code>min</code>, <code>max</code>, <code>mean</code>) without complex algorithms or memory allocation, keeping the library focused and efficient.</li>
-    <li><b>Production Metrics (optional):</b> Enable the <code>metrics</code> feature for a thread-safe <code>Watch</code>, <code>Timer</code> (auto record on drop), and <code>stopwatch!</code> macro powered by <code>hdrhistogram</code> for percentiles.</li>
+    <li><b>Production Metrics (optional):</b> Enable the <code>metrics</code> feature for a thread-safe <code>Watch</code>, <code>Timer</code> (auto record on drop), and <code>stopwatch!</code> macro using a <b>built-in zero-dependency histogram</b> for percentiles.</li>
     <li><b>Minimal API Surface:</b> Just four functions and two macros - easy to learn, hard to misuse, and unlikely to ever need breaking changes.</li>
     <li><b>Cross-Platform:</b> Consistent behavior across <b>Linux</b>, <b>macOS</b>, <b>Windows</b>, and other platforms supported by Rust's standard library.</li>
 </ul>
 
+<hr>
+<br>
+
+## Feature Flags
+- `none`: no features.
+- `std` (*default*): uses Rust standard library; disables `no_std`
+- `benchmark` (*default*): enables default benchmark measurement.
+- `metrics` (*optional*): production/live metrics (`Watch`, `Timer`, `stopwatch!`).
+- `default`: convenience feature equal to `std + benchmark`
+- `standard`: convenience feature equal to `std + benchmark + metrics`
+- `minimal`: minimal build with core timing only (*no default features*)
+- `all`: Activates all features (*includes: `std + benchmark + metrics`*)
+
+🔗 See [**`FEATURES DOCUMENTATION`**](./docs/features/README.md) for more information.
+
+<br>
+<hr>
 <br>
 
 <h2>Usage:</h2>
+
+<br>
 
 ### Installation
 Add this to your `Cargo.toml`:
@@ -55,25 +123,36 @@ Add this to your `Cargo.toml`:
 benchmark = "0.5.0"
 ```
 
-#### Disable Default Features
+<br>
+
+
+### Standard Features
+> Enables all standard benchmark features.
+```toml
+[dependencies]
+
+# Enables Production & Development.
+benchmark = { version = "0.5.0", features = ["standard"] }
+```
+
+<br>
+
+### Disable Default Features
+> Enables all standard benchmark features.
 ```toml
 [dependencies]
 # Disable default features for true zero-overhead
 benchmark = { version = "0.5.0", default-features = false }
 ```
+<br>
 
+🔗 See [**`FEATURES DOCUMENTATION`**](./docs/features/README.md) for more information.
+
+<hr>
 <br>
 
 ## Quick Start
 
-> <b>Feature flags</b>
-> - <b>Default</b>: `features = ["std", "enabled"]`.
-> - <b>enabled</b>: turns on timing (disable for true zero-overhead no-ops).
-> - <b>std</b>: use Rust standard library (disables `no_std`).
-> - <b>metrics</b>: production metrics (`Watch`, `Timer`, `stopwatch!`) powered by `hdrhistogram` (implies `std`).
-> - <b>full</b>: convenience feature equal to `std + enabled`.
-> - <b>minimal</b>: minimal core timing only; use with `default-features = false`.
-> - For benches/examples in this README, run with: `--features "std enabled"`.
 
 <small>
 See also: <a href="./docs/API.md#async-usage"><b>Async Usage</b></a> · <a href="./docs/API.md#disabled-mode-behavior"><b>Disabled Mode Behavior</b></a> · <a href="./docs/API.md#production-metrics-feature-metrics"><b>Production Metrics</b></a>
@@ -106,7 +185,7 @@ assert!(duration.as_nanos() > 0);
 
 <br>
 
-### Named timing + Collector aggregation (std + enabled)
+### Named timing + Collector aggregation (std + benchmark)
 Record a named measurement and aggregate stats with `Collector`.
 ```rust
 use benchmark::{time_named, Collector};
@@ -133,7 +212,7 @@ println!(
 <br>
 
 ### Async timing with `await`
-The macros inline `Instant` timing when `features = ["std", "enabled"]`, so awaiting inside works seamlessly.
+The macros inline `Instant` timing when `features = ["std", "benchmark"]`, so awaiting inside works seamlessly.
 ```rust
 use benchmark::time;
 
@@ -178,14 +257,14 @@ This project includes automated checks that verify zero bytes and zero time when
 </p>
 
 <ul>
-  <li><b>Size comparison (CI)</b>: Workflow <code>.github/workflows/ci.yml</code>, job <b>Zero Overhead</b> builds the crate twice and compares <code>libbenchmark.rlib</code> sizes with and without <code>enabled</code>. Any unexpected growth fails the job.</li>
+  <li><b>Size comparison (CI)</b>: Workflow <code>.github/workflows/ci.yml</code>, job <b>Zero Overhead</b> builds the crate twice and compares <code>libbenchmark.rlib</code> sizes with and without <code>benchmark</code>. Any unexpected growth fails the job.</li>
   <li><b>Assembly artifacts (CI)</b>: Job <b>Assembly Inspection</b> emits <code>objdump</code>/<code>llvm-objdump</code> symbol tables and disassembly for enabled vs disabled. Download the <b>assembly-artifacts</b> artifact from the run to inspect.</li>
   <li><b>Runtime comparison (CI)</b>: Bench workflow <code>.github/workflows/bench.yml</code> runs the example <code>examples/overhead_compare.rs</code> in both modes and uploads <b>overhead-compare</b> artifacts with raw output.</li>
   <li><b>Compile tests (trybuild)</b>: <code>tests/trybuild_disabled.rs</code> ensures disabled mode compiles with the macro and function APIs used in a minimal program.</li>
   <li><b>Local reproduction</b>:
     <ul>
       <li>Disabled: <code>cargo run --release --example overhead_compare --no-default-features</code></li>
-      <li>Enabled: <code>cargo run --release --example overhead_compare --no-default-features --features "std enabled"</code></li>
+      <li>Benchmark: <code>cargo run --release --example overhead_compare --no-default-features --features "std benchmark"</code></li>
     </ul>
   </li>
 </ul>
@@ -220,7 +299,7 @@ stats::array/k10_n1000        ~ 15.03–16.25 µs
   <li><b>Macro/function overhead</b> is on par with direct <code>Instant</code> usage for trivial work, as expected.</li>
   <li><b>Collector stats</b> scale roughly linearly with the number of samples; costs are dominated by iteration and min/max/accumulate.</li>
   <li><b>No-lock array baseline</b> provides a lower bound for aggregation cost; the difference vs Collector indicates lock and map overhead.</li>
-  <li>Use <code>--features std,enabled</code> to ensure the enabled timing path is benchmarked.</li>
+  <li>Use <code>--features std,benchmark</code> to ensure the benchmark timing path is used.</li>
 </ul>
 
 <h3>Benchmarks included</h3>
@@ -231,7 +310,7 @@ stats::array/k10_n1000        ~ 15.03–16.25 µs
   <li>Bench source: <code>benches/overhead.rs</code>.</li>
   <li>Criterion version: <code>0.5</code>.</li>
   <li>Note: when features are disabled (<code>default-features = false</code>), measurement returns <code>Duration::ZERO</code>.</li>
-  <li>Tip: use <code>--features std,enabled</code> to ensure the enabled path for benches.</li>
+  <li>Tip: use <code>--features std,benchmark</code> to ensure the benchmark path for benches.</li>
   <li>Environment affects results; run on a quiet system with performance governor if possible.</li>
 </ul>
 

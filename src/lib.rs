@@ -29,6 +29,27 @@
 //! let (result, duration) = time!(expensive_function());
 //! assert_eq!(result, 4);
 //! ```
+//!
+//! # Production Metrics (feature = "metrics")
+//!
+//! The following examples compile only when `features = ["std", "metrics"]` are enabled.
+//!
+//! ```rust
+//! # #[cfg(all(feature = "std", feature = "metrics"))]
+//! use benchmark::{stopwatch, Watch};
+//! #
+//! # #[cfg(all(feature = "std", feature = "metrics"))]
+//! fn main() {
+//!     let watch = Watch::new();
+//!     stopwatch!(watch, "work", {
+//!         // do work
+//!     });
+//!     let s = &watch.snapshot()["work"];
+//!     assert!(s.count >= 1);
+//! }
+//! # #[cfg(not(all(feature = "std", feature = "metrics")))]
+//! # fn main() {}
+//! ```
 
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(missing_docs)]
@@ -43,6 +64,8 @@
 #[cfg(feature = "std")]
 mod collector;
 mod duration;
+#[cfg(feature = "std")]
+pub mod histogram;
 mod measurement;
 #[cfg(all(feature = "std", feature = "metrics"))]
 mod timer;
@@ -64,7 +87,7 @@ pub use watch::{Watch, WatchBuilder, WatchStats};
 pub use crate as benchmark;
 
 // Core timing functionality
-#[cfg(all(feature = "std", feature = "enabled"))]
+#[cfg(all(feature = "std", feature = "benchmark"))]
 use std::time::Instant;
 
 /// Measures the execution time of a function.
@@ -81,11 +104,11 @@ use std::time::Instant;
 ///     2 + 2
 /// });
 /// assert_eq!(result, 4);
-/// # // Touch duration under enabled to avoid lints and flakiness
-/// # #[cfg(feature = "enabled")]
+/// # // Touch duration under benchmark to avoid lints and flakiness
+/// # #[cfg(feature = "benchmark")]
 /// # let _ = duration.as_nanos();
 /// ```
-#[cfg(all(feature = "enabled", feature = "std"))]
+#[cfg(all(feature = "benchmark", feature = "std"))]
 #[inline]
 pub fn measure<T, F: FnOnce() -> T>(f: F) -> (T, Duration) {
     let start = Instant::now();
@@ -95,7 +118,7 @@ pub fn measure<T, F: FnOnce() -> T>(f: F) -> (T, Duration) {
 }
 
 /// Measures the execution time of a function (disabled version).
-#[cfg(not(feature = "enabled"))]
+#[cfg(not(feature = "benchmark"))]
 #[inline]
 pub fn measure<T, F: FnOnce() -> T>(f: F) -> (T, Duration) {
     (f(), Duration::ZERO)
@@ -117,7 +140,7 @@ pub fn measure<T, F: FnOnce() -> T>(f: F) -> (T, Duration) {
 /// assert_eq!(result, 4);
 /// assert_eq!(measurement.name, "computation");
 /// ```
-#[cfg(all(feature = "enabled", feature = "std"))]
+#[cfg(all(feature = "benchmark", feature = "std"))]
 #[inline]
 pub fn measure_named<T, F: FnOnce() -> T>(name: &'static str, f: F) -> (T, Measurement) {
     #[cfg(miri)]
@@ -141,7 +164,7 @@ pub fn measure_named<T, F: FnOnce() -> T>(name: &'static str, f: F) -> (T, Measu
 }
 
 /// Measures the execution time of a function with a name (disabled version).
-#[cfg(not(feature = "enabled"))]
+#[cfg(not(feature = "benchmark"))]
 #[inline]
 pub fn measure_named<T, F: FnOnce() -> T>(name: &'static str, f: F) -> (T, Measurement) {
     let measurement = Measurement {
@@ -156,7 +179,7 @@ pub fn measure_named<T, F: FnOnce() -> T>(name: &'static str, f: F) -> (T, Measu
 
 /// Times an expression and returns (result, duration).
 ///
-/// When features `enabled` + `std` are active, the macro inlines timing using
+/// When features `benchmark` + `std` are active, the macro inlines timing using
 /// `std::time::Instant` so it can be used inside async contexts (supports `await`).
 ///
 /// # Examples
@@ -166,7 +189,7 @@ pub fn measure_named<T, F: FnOnce() -> T>(name: &'static str, f: F) -> (T, Measu
 /// let (result, duration) = time!(2 + 2);
 /// assert_eq!(result, 4);
 /// ```
-#[cfg(all(feature = "enabled", feature = "std"))]
+#[cfg(all(feature = "benchmark", feature = "std"))]
 #[macro_export]
 macro_rules! time {
     ($expr:expr) => {{
@@ -178,7 +201,7 @@ macro_rules! time {
 }
 
 /// Times an expression and returns (result, duration) - disabled version.
-#[cfg(not(feature = "enabled"))]
+#[cfg(not(feature = "benchmark"))]
 #[macro_export]
 macro_rules! time {
     ($expr:expr) => {{
@@ -188,7 +211,7 @@ macro_rules! time {
 
 /// Times an expression with a name and returns (result, measurement).
 ///
-/// When features `enabled` + `std` are active, the macro inlines timing using
+/// When features `benchmark` + `std` are active, the macro inlines timing using
 /// `std::time::Instant` so it can be used inside async contexts (supports `await`).
 ///
 /// # Examples
@@ -199,7 +222,7 @@ macro_rules! time {
 /// assert_eq!(result, 4);
 /// assert_eq!(measurement.name, "addition");
 /// ```
-#[cfg(all(feature = "enabled", feature = "std"))]
+#[cfg(all(feature = "benchmark", feature = "std"))]
 #[macro_export]
 macro_rules! time_named {
     ($name:expr, $expr:expr) => {{
@@ -223,7 +246,7 @@ macro_rules! time_named {
 }
 
 /// Times an expression with a name and returns (result, measurement) - disabled version.
-#[cfg(not(feature = "enabled"))]
+#[cfg(not(feature = "benchmark"))]
 #[macro_export]
 macro_rules! time_named {
     ($name:expr, $expr:expr) => {{

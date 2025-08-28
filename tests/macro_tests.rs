@@ -8,13 +8,13 @@ fn test_time_named_macro() {
     assert_eq!(result, 5);
     assert_eq!(m.name, "named_add");
 
-    #[cfg(feature = "enabled")]
+    #[cfg(feature = "benchmark")]
     {
         // Touch duration to avoid lints and ensure it's available
         let _ = m.duration.as_nanos();
     }
 
-    #[cfg(not(feature = "enabled"))]
+    #[cfg(not(feature = "benchmark"))]
     {
         assert_eq!(m.duration.as_nanos(), 0);
         assert_eq!(m.timestamp, 0);
@@ -31,12 +31,12 @@ async fn test_time_macro_async() {
     let (result, d) = time!(async_add().await);
     assert_eq!(result, 42);
 
-    #[cfg(feature = "enabled")]
+    #[cfg(feature = "benchmark")]
     {
         assert!(d.as_millis() >= 1);
     }
 
-    #[cfg(not(feature = "enabled"))]
+    #[cfg(not(feature = "benchmark"))]
     {
         assert_eq!(d.as_nanos(), 0);
     }
@@ -53,12 +53,12 @@ async fn test_time_named_macro_async() {
     assert_eq!(result, 42);
     assert_eq!(m.name, "async_mul");
 
-    #[cfg(feature = "enabled")]
+    #[cfg(feature = "benchmark")]
     {
         assert!(m.duration.as_millis() >= 1);
     }
 
-    #[cfg(not(feature = "enabled"))]
+    #[cfg(not(feature = "benchmark"))]
     {
         assert_eq!(m.duration.as_nanos(), 0);
         assert_eq!(m.timestamp, 0);
