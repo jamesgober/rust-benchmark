@@ -1073,9 +1073,7 @@ mod benches {
         let total_ops: u64 = threads * iterations_per_thread;
         let ns_per_op = duration.as_nanos() / u128::from(total_ops);
 
-        println!(
-            "Multi-thread record ({threads} threads): {ns_per_op} ns/op",
-        );
+        println!("Multi-thread record ({threads} threads): {ns_per_op} ns/op");
 
         // Should scale reasonably with multiple threads
         assert!(
