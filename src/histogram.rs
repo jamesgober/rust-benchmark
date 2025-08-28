@@ -902,15 +902,15 @@ mod tests {
         let hist = Histogram::new();
 
         // Test exact precision in linear range (0-1023ns)
-        for i in 0..1024 {
-            hist.record(i);
+        for i in 0u32..1024 {
+            hist.record(u64::from(i));
         }
 
         // Should have exact precision for each nanosecond
-        for i in 0..1024 {
-            let percentile = i as f64 / 1023.0;
+        for i in 0u32..1024 {
+            let percentile = f64::from(i) / 1023.0;
             let value = hist.percentile(percentile).unwrap();
-            assert!(value <= i, "Value {} should be <= {}", value, i);
+            assert!(value <= u64::from(i), "Value {value} should be <= {i}");
         }
     }
 
@@ -937,7 +937,7 @@ mod tests {
 
         // Median should be approximately the middle value
         let median = hist.median().unwrap();
-        assert!(median >= 50_000 && median <= 150_000);
+        assert!((50_000..=150_000).contains(&median));
     }
 
     #[test]
@@ -1027,7 +1027,7 @@ mod benches {
     #[test]
     fn bench_record_single_thread() {
         let hist = Histogram::new();
-        let iterations = 10_000_000;
+        let iterations: u64 = 10_000_000;
 
         let start = std::time::Instant::now();
         for i in 0..iterations {
@@ -1035,14 +1035,13 @@ mod benches {
         }
         let duration = start.elapsed();
 
-        let ns_per_op = duration.as_nanos() / iterations as u128;
-        println!("Single-thread record: {} ns/op", ns_per_op);
+        let ns_per_op = duration.as_nanos() / u128::from(iterations);
+        println!("Single-thread record: {ns_per_op} ns/op");
 
         // Should be under 10ns per operation on modern hardware
         assert!(
             ns_per_op < 20,
-            "Record operation too slow: {} ns/op",
-            ns_per_op
+            "Record operation too slow: {ns_per_op} ns/op",
         );
     }
 
@@ -1050,8 +1049,8 @@ mod benches {
     #[test]
     fn bench_record_multi_thread() {
         let hist = Arc::new(Histogram::new());
-        let threads = 8;
-        let iterations_per_thread = 1_000_000;
+        let threads: u64 = 8;
+        let iterations_per_thread: u64 = 1_000_000;
 
         let start = std::time::Instant::now();
 
@@ -1071,21 +1070,19 @@ mod benches {
         }
 
         let duration = start.elapsed();
-        let total_ops = threads * iterations_per_thread;
-        let ns_per_op = duration.as_nanos() / total_ops as u128;
+        let total_ops: u64 = threads * iterations_per_thread;
+        let ns_per_op = duration.as_nanos() / u128::from(total_ops);
 
         println!(
-            "Multi-thread record ({} threads): {} ns/op",
-            threads, ns_per_op
+            "Multi-thread record ({threads} threads): {ns_per_op} ns/op",
         );
 
         // Should scale reasonably with multiple threads
         assert!(
             ns_per_op < 50,
-            "Multi-thread record too slow: {} ns/op",
-            ns_per_op
+            "Multi-thread record too slow: {ns_per_op} ns/op",
         );
-        assert_eq!(hist.count(), total_ops as u64);
+        assert_eq!(hist.count(), total_ops);
     }
 
     #[cfg_attr(not(feature = "perf-tests"), ignore)]
@@ -1098,24 +1095,23 @@ mod benches {
             hist.record(i % 10_000);
         }
 
-        let iterations = 100_000;
+        let iterations: u64 = 100_000;
         let start = std::time::Instant::now();
 
         for i in 0..iterations {
-            let percentile = (i % 100) as f64 / 100.0;
+            let percentile = f64::from((i % 100) as u32) / 100.0;
             let _ = hist.percentile(percentile);
         }
 
         let duration = start.elapsed();
-        let ns_per_op = duration.as_nanos() / iterations as u128;
+        let ns_per_op = duration.as_nanos() / u128::from(iterations);
 
-        println!("Percentile calculation: {} ns/op", ns_per_op);
+        println!("Percentile calculation: {ns_per_op} ns/op");
 
         // Should be under 1000ns per percentile calculation
         assert!(
             ns_per_op < 1000,
-            "Percentile calculation too slow: {} ns/op",
-            ns_per_op
+            "Percentile calculation too slow: {ns_per_op} ns/op",
         );
     }
 }
