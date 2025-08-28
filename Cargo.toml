@@ -80,6 +80,18 @@ harness = false
 name    = "stats"
 harness = false
 
+[[bench]] # Timer primitives (Instant/Duration) micro-benches
+name    = "timers"
+harness = false
+
+[[bench]] # Histogram hot-path benches (record/percentiles)
+name    = "histogram_hot"
+harness = false
+
+[[bench]] # Watch/Timer hot-path benches (metrics)
+name    = "watch_timer_hot"
+harness = false
+
 
 
 #╔═══════════════════════════════════════════════════════════╗

@@ -21,6 +21,8 @@
         <a href="./BENCHMARK.md" title="Performance Benchmark"><b>BENCHMARK</b></a>
         <span>&nbsp;│&nbsp;</span>
         <a href="./METRICS.md" title="Performance Metrics"><b>METRICS</b></a>
+        <span>&nbsp;│&nbsp;</span>
+        <a href="./platforms/INSTANT.md" title="Platform Timer Notes"><b>PLATFORMS</b></a>
     </sup>
 </div>
 <br>
@@ -40,6 +42,8 @@ PERF_TESTS=1 cargo bench -F perf-tests
 Notes:
 - The `perf-tests` feature gates perf-sensitive paths in tests/benches.
 - The `PERF_TESTS=1` env var is additionally checked inside tests to avoid accidental CI runs.
+
+Quick link: See “How to run perf benchmarks (Criterion)” → [docs/BENCHMARK.md#how-to-run-perf-benchmarks](./BENCHMARK.md#how-to-run-perf-benchmarks)
 
 
 

@@ -11,6 +11,24 @@
 ## [Unreleased]
 
 
+### Added
+- Scheduled perf workflow: `.github/workflows/perf.yml`
+  - Runs twice weekly (Sun/Wed 02:00 UTC) and via manual dispatch
+  - Gated with `PERF_TESTS=1` and `-F perf-tests`; runs perf-gated tests and benches
+- Criterion benches (perf-gated):
+  - `benches/timers.rs` — `Instant::now` throughput and `Duration` ops micro-benches
+  - `benches/histogram_hot.rs` — `Histogram::record` and `Histogram::percentiles`
+- Platform documentation: `docs/platforms/INSTANT.md` (platform-specific `Instant` notes)
+- Cross-platform timer tests: `tests/platform_time.rs` (monotonicity, resolution semantics)
+- Docs navigation: added “PLATFORMS” link in `docs/README.md`
+- Manual observation test (opt-in): `tests/system_time_change.rs` (ignored; gated by `PERF_TESTS=1`)
+- Criterion benches (metrics hot paths): `benches/watch_timer_hot.rs` (group `watch_timer_hot`)
+
+### Changed
+- CI perf workflow restricted to `main` and protected with concurrency guard
+- Replaced `#[inline(always)]` with `#[inline]` for hot-path methods in `src/histogram.rs`
+  - Resolves `clippy::inline_always` under `-D warnings` while preserving optimizer freedom
+
 
 <br>
 
@@ -184,7 +202,7 @@ Initial pre-dev release for backup.
 
 
 
-[Unreleased]: https://github.com/jamesgober/rust-benchmark/compare/v0.5.7...HEAD
+[Unreleased]: https://github.com/jamesgober/rust-benchmark/compare/v0.5.8...HEAD
 [0.6.0]: https://github.com/jamesgober/rust-benchmark/compare/v0.5.8...v0.6.0
 [0.5.8]: https://github.com/jamesgober/rust-benchmark/compare/v0.5.7...v0.5.8
 [0.5.7]: https://github.com/jamesgober/rust-benchmark/compare/v0.5.0...v0.5.7

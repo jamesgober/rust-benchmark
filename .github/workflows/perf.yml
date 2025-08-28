@@ -41,3 +41,38 @@ jobs:
 
       - name: Run perf-gated benches
         run: cargo bench -F perf-tests
+
+      - name: Install jq (for baseline comparison)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq python3
+
+      - name: Run watch_timer_hot (metrics) with fixed timings
+        env:
+          PERF_TESTS: "1"
+        run: |
+          cargo bench -F "perf-tests metrics" --bench watch_timer_hot -- --measurement-time 5 --warm-up-time 2
+
+      - name: Compare Criterion results to baselines (watch_timer_hot)
+        run: |
+          bash scripts/compare_criterion_baseline.sh watch_timer_hot perf_baselines/watch_timer_hot.json
+
+      - name: Run timers (perf) with fixed timings
+        env:
+          PERF_TESTS: "1"
+        run: |
+          cargo bench -F perf-tests --bench timers -- --measurement-time 5 --warm-up-time 2
+
+      - name: Compare Criterion results to baselines (timers)
+        run: |
+          bash scripts/compare_criterion_baseline.sh timers perf_baselines/timers.json
+
+      - name: Run histogram_hot (perf) with fixed timings
+        env:
+          PERF_TESTS: "1"
+        run: |
+          cargo bench -F perf-tests --bench histogram_hot -- --measurement-time 5 --warm-up-time 2
+
+      - name: Compare Criterion results to baselines (histogram_hot)
+        run: |
+          bash scripts/compare_criterion_baseline.sh histogram_hot perf_baselines/histogram_hot.json

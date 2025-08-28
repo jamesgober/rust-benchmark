@@ -14,7 +14,6 @@
     Each feature set is additive and designed to maintain performance, safety, and simplicity.
 </p>
 
-
 <br><br>
 
 <div align="center">
@@ -33,7 +32,6 @@
 </div>
 
 <br>
-
 
 ## Features
 - **`std`** (*default*): Uses Rust standard library; disables `no_std`

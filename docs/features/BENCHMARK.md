@@ -215,6 +215,31 @@ fn main() {
 
 <br>
 
+## How to run perf benchmarks (Criterion)
+Perf-sensitive benches are disabled by default. Enable explicitly to avoid noisy CI by default and to run only when desired.
+
+```bash
+# Run all perf-gated benches
+PERF_TESTS=1 cargo bench -F perf-tests
+
+# Run a specific bench target
+PERF_TESTS=1 cargo bench -F perf-tests timers
+PERF_TESTS=1 cargo bench -F perf-tests histogram_hot
+PERF_TESTS=1 cargo bench -F "perf-tests metrics" watch_timer_hot
+```
+
+Bench files and groups:
+- `benches/timers.rs` → group: `timers`
+  - Measures `Instant::now()` throughput and `Duration` arithmetic
+- `benches/histogram_hot.rs` → group: `histogram_hot`
+  - Measures `Histogram::record` and `Histogram::percentiles`
+- `benches/watch_timer_hot.rs` → group: `watch_timer_hot`
+  - Measures `Watch::record`, `Watch::record_instant`, `Watch::snapshot` scaling, and `Timer` drop-throughput
+
+Notes:
+- CI scheduled perf runs are configured in `.github/workflows/perf.yml`.
+- When `perf-tests` is disabled, benches build with a no-op `main()` to prevent linkage errors.
+
 <!--
 :: COPYRIGHT
 ============================================================================ -->

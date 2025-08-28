@@ -26,7 +26,6 @@
 
 > Note: Perf-sensitive tests/benches are skipped by default. To opt in, run with feature `perf-tests` and env `PERF_TESTS=1`. See "Performance Tests (opt-in)" below.
 
-
 ## Table of Contents
 - [Installation](#installation)
 - [Features](#features)

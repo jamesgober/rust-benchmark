@@ -1,0 +1,13 @@
+{
+  "watch/record_instant/n=1000": { "median_s": 0.000103, "tolerance": 0.20 },
+  "watch/record_instant/n=10000": { "median_s": 0.000970, "tolerance": 0.20 },
+  "watch/record_instant/n=100000": { "median_s": 0.0105, "tolerance": 0.25 },
+
+  "watch/snapshot_scaling/m=1 s=10000": { "median_s": 0.00000148, "tolerance": 0.30 },
+  "watch/snapshot_scaling/m=10 s=10000": { "median_s": 0.0000120, "tolerance": 0.30 },
+  "watch/snapshot_scaling/m=100 s=5000": { "median_s": 0.000097, "tolerance": 0.35 },
+
+  "timer/drop_throughput/n=1000": { "median_s": 0.000218, "tolerance": 0.25 },
+  "timer/drop_throughput/n=10000": { "median_s": 0.002116, "tolerance": 0.20 },
+  "timer/drop_throughput/n=100000": { "median_s": 0.0230, "tolerance": 0.20 }
+}

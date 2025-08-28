@@ -203,9 +203,41 @@ fn main() {
 <hr>
 <br>
 
+<h2 id="how-to-run-perf-benchmarks">How to run perf benchmarks (Criterion)</h2>
+<p>
+  Perf-sensitive Criterion benches are opt-in and gated by a feature flag plus an environment variable to avoid noisy CI results by default.
+  These run in scheduled CI via <code>.github/workflows/perf.yml</code>, and can be invoked locally as follows:
+  <br>
+</p>
 
+```bash
+# Run perf-gated benches locally
+PERF_TESTS=1 cargo bench -F perf-tests
 
+# Optionally target a specific bench
+PERF_TESTS=1 cargo bench -F perf-tests timers
+PERF_TESTS=1 cargo bench -F perf-tests histogram_hot
+PERF_TESTS=1 cargo bench -F "perf-tests metrics" watch_timer_hot
+```
 
+<p>
+  Bench groups provided:
+</p>
+
+- <strong>timers</strong> — `benches/timers.rs`
+  - `Instant::now()` throughput
+  - `Duration` arithmetic (add, sub, mul, div)
+- <strong>histogram_hot</strong> — `benches/histogram_hot.rs`
+  - `Histogram::record` hot-path
+  - `Histogram::percentiles` extraction
+- <strong>watch_timer_hot</strong> — `benches/watch_timer_hot.rs`
+  - `Watch::record` and `Watch::record_instant` hot paths
+  - `Watch::snapshot` scaling by metric count and samples
+  - `Timer` drop-throughput (records on drop)
+
+<small>
+Note: When the <code>perf-tests</code> feature is disabled, benches compile with a no-op <code>main()</code> to avoid linkage errors.
+</small>
 
 <!--
 :: COPYRIGHT

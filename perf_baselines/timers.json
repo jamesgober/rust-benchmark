@@ -1,0 +1,6 @@
+{
+  "instant_now/4096":   { "median_s": 0.000162,   "tolerance": 0.30 },
+  "instant_now/16384":  { "median_s": 0.000640,   "tolerance": 0.30 },
+  "instant_now/65536":  { "median_s": 0.0030674,  "tolerance": 0.30 },
+  "duration_ops/add_sub": { "median_s": 0.000000001434, "tolerance": 0.20 }
+}

@@ -1,0 +1,9 @@
+{
+  "histogram/record/1000":    { "median_s": 0.000031227,  "tolerance": 0.35 },
+  "histogram/record/10000":   { "median_s": 0.00024574,   "tolerance": 0.35 },
+  "histogram/record/100000":  { "median_s": 0.0020168,    "tolerance": 0.35 },
+
+  "histogram/percentiles/10000":   { "median_s": 0.000004637,  "tolerance": 0.35 },
+  "histogram/percentiles/100000":  { "median_s": 0.0000037215, "tolerance": 0.35 },
+  "histogram/percentiles/1000000": { "median_s": 0.0000068704, "tolerance": 0.35 }
+}
