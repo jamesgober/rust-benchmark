@@ -9,7 +9,7 @@ fn instant_is_monotonic_non_decreasing() {
     // We allow equality because many platforms have coarse timer granularity.
     let a = Instant::now();
     let b = Instant::now();
-    assert!(b >= a, "Instant went backwards: {:?} -> {:?}", a, b);
+    assert!(b >= a, "Instant went backwards: {a:?} -> {b:?}");
 }
 
 #[test]
@@ -62,6 +62,7 @@ fn instant_checked_add_sub_apis() {
 }
 
 #[test]
+#[cfg_attr(miri, ignore)]
 fn system_time_vs_instant_semantics_documented() {
     // We cannot reliably force a system time change in CI. This test simply asserts the
     // intended semantic difference: Instant is for durations; SystemTime is wall-clock.
@@ -107,9 +108,6 @@ mod perf {
             "no observable timer progress across iterations"
         );
         let elapsed = start.elapsed();
-        eprintln!(
-            "instant_now_throughput_smoke: iters={} elapsed={:?}",
-            iters, elapsed
-        );
+        eprintln!("instant_now_throughput_smoke: iters={iters} elapsed={elapsed:?}");
     }
 }

@@ -168,11 +168,11 @@ impl Watch {
     /// Record elapsed time since `start` for a metric name.
     pub fn record_instant(&self, name: &str, start: Instant) -> u64 {
         let ns_u128 = start.elapsed().as_nanos();
-        // Convert to u64 with a fast saturating cast
-        let ns_u64 = if ns_u128 > u64::MAX as u128 {
+        // Convert to u64 using infallible saturating via try_from to satisfy clippy
+        let ns_u64 = if ns_u128 > u128::from(u64::MAX) {
             u64::MAX
         } else {
-            ns_u128 as u64
+            u64::try_from(ns_u128).unwrap_or(u64::MAX)
         };
         self.record(name, ns_u64);
         ns_u64
