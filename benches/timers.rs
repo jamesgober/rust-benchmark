@@ -41,7 +41,7 @@ fn bench_duration_ops(c: &mut Criterion) {
         b.iter(|| {
             let mut d = Duration::from_nanos(1);
             for _ in 0..10_000 {
-                d = d + Duration::from_nanos(1);
+                d += Duration::from_nanos(1);
                 d = d.saturating_sub(Duration::from_nanos(1));
             }
             criterion::black_box(d)

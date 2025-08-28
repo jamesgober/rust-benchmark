@@ -968,7 +968,7 @@ mod tests {
         assert_eq!(hist.percentile(1.0), Some(42));
     }
 
-    #[cfg_attr(not(feature = "perf-tests"), ignore)]
+    #[cfg_attr(not(feature = "perf-tests"), ignore = "perf tests are opt-in; set PERF_TESTS=1 to enable")] 
     #[test]
     fn test_performance_characteristics() {
         if !perf_enabled() {
@@ -1006,7 +1006,7 @@ mod tests {
         );
     }
 
-    #[cfg_attr(not(feature = "perf-tests"), ignore)]
+    #[cfg_attr(not(feature = "perf-tests"), ignore = "perf tests are opt-in; set PERF_TESTS=1 to enable")] 
     #[test]
     fn test_memory_efficiency() {
         // Test that histogram has reasonable memory footprint
@@ -1040,7 +1040,7 @@ mod benches {
         std::env::var_os("PERF_TESTS").is_some()
     }
 
-    #[cfg_attr(not(feature = "perf-tests"), ignore)]
+    #[cfg_attr(not(feature = "perf-tests"), ignore = "perf tests are opt-in; set PERF_TESTS=1 to enable")] 
     #[test]
     fn bench_record_single_thread() {
         if !perf_enabled() {
@@ -1066,7 +1066,7 @@ mod benches {
         );
     }
 
-    #[cfg_attr(not(feature = "perf-tests"), ignore)]
+    #[cfg_attr(not(feature = "perf-tests"), ignore = "perf tests are opt-in; set PERF_TESTS=1 to enable")] 
     #[test]
     fn bench_record_multi_thread() {
         if !perf_enabled() {
@@ -1108,7 +1108,7 @@ mod benches {
         assert_eq!(hist.count(), total_ops);
     }
 
-    #[cfg_attr(not(feature = "perf-tests"), ignore)]
+    #[cfg_attr(not(feature = "perf-tests"), ignore = "perf tests are opt-in; set PERF_TESTS=1 to enable")] 
     #[test]
     fn bench_percentile_calculation() {
         if !perf_enabled() {
