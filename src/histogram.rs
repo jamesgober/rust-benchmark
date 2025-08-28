@@ -141,7 +141,7 @@ impl Histogram {
     /// histogram.record(1000); // Record 1 microsecond
     /// histogram.record(500);  // Record 500 nanoseconds
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn record(&self, value_ns: u64) {
         // Update statistics atomically
         self.update_min(value_ns);
@@ -181,7 +181,7 @@ impl Histogram {
     /// histogram.record_duration(Duration::from_millis(1));
     /// histogram.record_duration(Duration::from_nanos(500));
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn record_duration(&self, duration: Duration) {
         // Handle potential overflow from Duration::as_nanos() (returns u128)
         let nanos = duration.as_nanos();
@@ -204,7 +204,7 @@ impl Histogram {
     /// # Performance
     ///
     /// O(1) - single atomic read
-    #[inline(always)]
+    #[inline]
     pub fn min(&self) -> Option<u64> {
         let min = self.min_value.load(MEMORY_ORDER);
         if min == u64::MAX {
@@ -224,7 +224,7 @@ impl Histogram {
     /// # Performance
     ///
     /// O(1) - single atomic read
-    #[inline(always)]
+    #[inline]
     pub fn max(&self) -> Option<u64> {
         let count = self.total_count.load(MEMORY_ORDER);
         if count == 0 {
@@ -249,7 +249,7 @@ impl Histogram {
     ///
     /// Returns f64 for maximum precision. For integer nanosecond precision,
     /// consider using `median()` instead.
-    #[inline(always)]
+    #[inline]
     pub fn mean(&self) -> Option<f64> {
         let count = self.total_count.load(MEMORY_ORDER);
         if count == 0 {
@@ -268,7 +268,7 @@ impl Histogram {
     /// # Performance
     ///
     /// O(1) - single atomic read
-    #[inline(always)]
+    #[inline]
     pub fn count(&self) -> u64 {
         self.total_count.load(MEMORY_ORDER)
     }
@@ -278,7 +278,7 @@ impl Histogram {
     /// # Performance
     ///
     /// O(1) - single atomic read
-    #[inline(always)]
+    #[inline]
     pub fn is_empty(&self) -> bool {
         self.total_count.load(MEMORY_ORDER) == 0
     }
@@ -326,7 +326,7 @@ impl Histogram {
     /// assert!(p50 >= 49000 && p50 <= 51000, "p50={}", p50);
     /// assert_eq!(histogram.percentile(1.0), Some(100000)); // Max
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn percentile(&self, percentile: f64) -> Option<u64> {
         // Input validation
         if !(0.0..=1.0).contains(&percentile) {
@@ -422,7 +422,7 @@ impl Histogram {
     /// // Median uses nearest-rank: ceil(0.5 * 3) = 2nd element -> 200
     /// assert_eq!(histogram.median(), Some(200));
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn median(&self) -> Option<u64> {
         self.percentile(0.5)
     }
@@ -430,7 +430,7 @@ impl Histogram {
     /// Returns the median as a Duration.
     ///
     /// Convenience method for Duration-based APIs.
-    #[inline(always)]
+    #[inline]
     pub fn median_duration(&self) -> Option<Duration> {
         self.median().map(Duration::from_nanos)
     }
@@ -438,7 +438,7 @@ impl Histogram {
     /// Returns the percentile as a Duration.
     ///
     /// Convenience method for Duration-based APIs.
-    #[inline(always)]
+    #[inline]
     pub fn percentile_duration(&self, percentile: f64) -> Option<Duration> {
         self.percentile(percentile).map(Duration::from_nanos)
     }
@@ -475,7 +475,7 @@ impl Histogram {
     /// println!("P50: {:?}, P95: {:?}, P99: {:?}, P99.9: {:?}",
     ///          percentiles[0], percentiles[1], percentiles[2], percentiles[3]);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn percentiles(&self, percentiles: &[f64]) -> Vec<Option<u64>> {
         let total_count = self.total_count.load(MEMORY_ORDER);
         if total_count == 0 {
@@ -617,7 +617,7 @@ impl Histogram {
     // Private helper methods
 
     /// Atomically updates minimum value using compare-and-swap loop
-    #[inline(always)]
+    #[inline]
     fn update_min(&self, value: u64) {
         let mut current_min = self.min_value.load(MEMORY_ORDER);
         while value < current_min {
@@ -634,7 +634,7 @@ impl Histogram {
     }
 
     /// Atomically updates maximum value using compare-and-swap loop  
-    #[inline(always)]
+    #[inline]
     fn update_max(&self, value: u64) {
         let mut current_max = self.max_value.load(MEMORY_ORDER);
         while value > current_max {
@@ -651,7 +651,7 @@ impl Histogram {
     }
 
     /// Calculates the logarithmic bucket index for a given value
-    #[inline(always)]
+    #[inline]
     fn log_bucket_index(value: u64) -> usize {
         if value < LINEAR_BUCKETS as u64 {
             0 // Should not happen, but safe fallback
@@ -663,7 +663,7 @@ impl Histogram {
     }
 
     /// Returns the start value for a logarithmic bucket
-    #[inline(always)]
+    #[inline]
     fn bucket_start(bucket_idx: usize) -> u64 {
         if bucket_idx == 0 {
             LINEAR_BUCKETS as u64
@@ -673,7 +673,7 @@ impl Histogram {
     }
 
     /// Returns the end value for a logarithmic bucket (exclusive)
-    #[inline(always)]
+    #[inline]
     fn bucket_end(bucket_idx: usize) -> u64 {
         if bucket_idx >= 63 {
             u64::MAX
