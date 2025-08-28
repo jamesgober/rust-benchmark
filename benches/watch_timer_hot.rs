@@ -4,9 +4,9 @@
 // Gated behind both `perf-tests` and `metrics` to avoid building unless explicitly enabled.
 
 #[cfg(all(feature = "perf-tests", feature = "metrics"))]
-use benchmark::Watch;
-#[cfg(all(feature = "perf-tests", feature = "metrics"))]
 use benchmark::Timer;
+#[cfg(all(feature = "perf-tests", feature = "metrics"))]
+use benchmark::Watch;
 #[cfg(all(feature = "perf-tests", feature = "metrics"))]
 use criterion::{criterion_group, criterion_main, BatchSize, Criterion};
 #[cfg(all(feature = "perf-tests", feature = "metrics"))]

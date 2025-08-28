@@ -54,7 +54,11 @@ fn bench_histogram_percentiles(c: &mut Criterion) {
 }
 
 #[cfg(feature = "perf-tests")]
-criterion_group!(histogram_hot, bench_histogram_record, bench_histogram_percentiles);
+criterion_group!(
+    histogram_hot,
+    bench_histogram_record,
+    bench_histogram_percentiles
+);
 #[cfg(feature = "perf-tests")]
 criterion_main!(histogram_hot);
 

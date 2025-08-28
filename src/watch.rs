@@ -1,11 +1,26 @@
 #![cfg(all(feature = "std", feature = "metrics"))]
 
+#[cfg(feature = "parking-lot-locks")]
+use parking_lot::RwLock;
 use std::collections::HashMap;
 use std::fmt;
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
+#[cfg(not(feature = "parking-lot-locks"))]
+use std::sync::RwLock;
 use std::time::Instant;
 
 use crate::histogram::Histogram;
+
+// Normalize guard types across lock backends at module scope
+#[cfg(feature = "parking-lot-locks")]
+type ReadGuard<'a> = parking_lot::RwLockReadGuard<'a, HashMap<Arc<str>, Arc<Histogram>>>;
+#[cfg(not(feature = "parking-lot-locks"))]
+type ReadGuard<'a> = std::sync::RwLockReadGuard<'a, HashMap<Arc<str>, Arc<Histogram>>>;
+
+#[cfg(feature = "parking-lot-locks")]
+type WriteGuard<'a> = parking_lot::RwLockWriteGuard<'a, HashMap<Arc<str>, Arc<Histogram>>>;
+#[cfg(not(feature = "parking-lot-locks"))]
+type WriteGuard<'a> = std::sync::RwLockWriteGuard<'a, HashMap<Arc<str>, Arc<Histogram>>>;
 
 /// Default lowest discernible value (1ns)
 const DEFAULT_LOWEST: u64 = 1;
@@ -32,7 +47,8 @@ impl Default for Watch {
 
 struct Inner {
     // Store Arc<Histogram> to allow lock-free record on hot path
-    hist: RwLock<HashMap<String, Arc<Histogram>>>,
+    // Keyed by Arc<str> to avoid repeated String allocations and enable cheap sharing.
+    hist: RwLock<HashMap<Arc<str>, Arc<Histogram>>>,
     lowest: u64,
     highest: u64,
 }
@@ -62,16 +78,36 @@ pub struct WatchStats {
 
 impl fmt::Debug for Watch {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("Watch")
-            .field(
-                "metrics_len",
-                &self.inner.hist.read().map(|m| m.len()).unwrap_or(0),
-            )
-            .finish()
+        let len = self.read_hist().len();
+        f.debug_struct("Watch").field("metrics_len", &len).finish()
     }
 }
 
 impl Watch {
+    #[cfg(feature = "parking-lot-locks")]
+    #[inline]
+    fn read_hist(&self) -> ReadGuard<'_> {
+        self.inner.hist.read()
+    }
+
+    #[cfg(not(feature = "parking-lot-locks"))]
+    #[inline]
+    fn read_hist(&self) -> ReadGuard<'_> {
+        self.inner.hist.read().expect("watch read lock poisoned")
+    }
+
+    #[cfg(feature = "parking-lot-locks")]
+    #[inline]
+    fn write_hist(&self) -> WriteGuard<'_> {
+        self.inner.hist.write()
+    }
+
+    #[cfg(not(feature = "parking-lot-locks"))]
+    #[inline]
+    fn write_hist(&self) -> WriteGuard<'_> {
+        self.inner.hist.write().expect("watch write lock poisoned")
+    }
+
     /// Create a new Watch with sensible defaults.
     pub fn new() -> Self {
         Self::with_bounds(DEFAULT_LOWEST, DEFAULT_HIGHEST)
@@ -110,28 +146,34 @@ impl Watch {
         let ns = duration_ns.clamp(self.inner.lowest, self.inner.highest);
 
         // Fast path: try obtain Arc without write locking
-        if let Ok(map) = self.inner.hist.read() {
-            if let Some(h) = map.get(name) {
-                h.record(ns);
-                return;
-            }
+        let existing: Option<Arc<Histogram>> = {
+            let map = self.read_hist();
+            map.get(name).cloned()
+        };
+        if let Some(h) = existing {
+            h.record(ns);
+            return;
         }
 
         // Slow path: create the histogram under write lock if absent
-        let mut map = self.inner.hist.write().expect("watch write lock poisoned");
+        let mut map = self.write_hist();
+        let key: Arc<str> = Arc::<str>::from(name);
         let h = map
-            .entry(name.to_string())
+            .entry(key)
             .or_insert_with(|| Arc::new(Histogram::new()))
             .clone();
-        drop(map);
         h.record(ns);
     }
 
     /// Record elapsed time since `start` for a metric name.
     pub fn record_instant(&self, name: &str, start: Instant) -> u64 {
-        let ns = start.elapsed().as_nanos();
-        // Convert to u64 safely, saturating at u64::MAX
-        let ns_u64 = u64::try_from(ns).unwrap_or(u64::MAX);
+        let ns_u128 = start.elapsed().as_nanos();
+        // Convert to u64 with a fast saturating cast
+        let ns_u64 = if ns_u128 > u64::MAX as u128 {
+            u64::MAX
+        } else {
+            ns_u128 as u64
+        };
         self.record(name, ns_u64);
         ns_u64
     }
@@ -144,10 +186,10 @@ impl Watch {
     /// # Panics
     /// Panics if the internal lock is poisoned from a prior panic.
     pub fn snapshot(&self) -> HashMap<String, WatchStats> {
-        let items: Vec<(String, Arc<Histogram>)> = {
-            let map = self.inner.hist.read().expect("watch read lock poisoned");
+        let items: Vec<(Arc<str>, Arc<Histogram>)> = {
+            let map = self.read_hist();
             map.iter()
-                .map(|(k, v)| (k.clone(), Arc::clone(v)))
+                .map(|(k, v)| (Arc::clone(k), Arc::clone(v)))
                 .collect()
         };
 
@@ -156,7 +198,7 @@ impl Watch {
             let count = h.count();
             if count == 0 {
                 out.insert(
-                    name,
+                    name.to_string(),
                     WatchStats {
                         count: 0,
                         min: 0,
@@ -183,7 +225,7 @@ impl Watch {
             let mean = h.mean().unwrap_or(0.0);
 
             out.insert(
-                name,
+                name.to_string(),
                 WatchStats {
                     count,
                     min,
@@ -205,7 +247,7 @@ impl Watch {
     /// # Panics
     /// Panics if the internal lock is poisoned from a prior panic.
     pub fn clear(&self) {
-        let mut map = self.inner.hist.write().expect("watch write lock poisoned");
+        let mut map = self.write_hist();
         map.clear();
     }
 
@@ -214,7 +256,7 @@ impl Watch {
     /// # Panics
     /// Panics if the internal lock is poisoned from a prior panic.
     pub fn clear_name(&self, name: &str) {
-        let mut map = self.inner.hist.write().expect("watch write lock poisoned");
+        let mut map = self.write_hist();
         map.remove(name);
     }
 }

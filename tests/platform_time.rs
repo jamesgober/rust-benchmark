@@ -96,12 +96,20 @@ mod perf {
         let mut progressed = 0u64;
         for _ in 0..iters {
             let now = Instant::now();
-            if now > last { progressed += 1; }
+            if now > last {
+                progressed += 1;
+            }
             last = now;
         }
         // Ensure at least some progress was observed to avoid completely static timers.
-        assert!(progressed > 0, "no observable timer progress across iterations");
+        assert!(
+            progressed > 0,
+            "no observable timer progress across iterations"
+        );
         let elapsed = start.elapsed();
-        eprintln!("instant_now_throughput_smoke: iters={} elapsed={:?}", iters, elapsed);
+        eprintln!(
+            "instant_now_throughput_smoke: iters={} elapsed={:?}",
+            iters, elapsed
+        );
     }
 }
