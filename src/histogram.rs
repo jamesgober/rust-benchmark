@@ -1012,7 +1012,7 @@ mod tests {
         assert_eq!(hist.min(), Some(0));
         assert_eq!(hist.max(), Some(999_999));
         let median = hist.median().unwrap();
-        assert!(median >= 400_000 && median <= 600_000);
+        assert!((400_000..=600_000).contains(&median));
     }
 }
 
