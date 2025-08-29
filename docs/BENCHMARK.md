@@ -24,6 +24,8 @@
 
 <br>
 
+> Feature gating: This suite is enabled by the `benchmark` feature (default). For a minimal build, disable default features; re-enable with `-F benchmark` when needed.
+
 <p>
     Benchmark is a development-time performance toolkit focused on simplicity and statistical rigor. Use it to time code paths, gather stable measurements, compare implementations, and catch regressions in CI. It favors minimal overhead and ergonomic APIs while remaining easy to disable entirely for zero-cost builds.
 </p>
@@ -62,6 +64,130 @@
     </li>
 </ul>
 
+<hr>
+<br>
+
+<h2 id="measured-results">Measured Results (local)</h2>
+<p>
+  The following results were captured locally on Aug 29, 2025 using <code>cargo bench</code> with Criterion. Numbers are illustrative and may vary across machines and runs. See commands below to reproduce.
+  <br>
+</p>
+
+<details>
+<summary><b>Aggregation: benches/stats.rs</b></summary>
+
+<pre>
+stats::single/1000      time:   [1.9788 µs 2.0698 µs 2.2386 µs]
+stats::single/10000     time:   [21.927 µs 22.630 µs 23.999 µs]
+
+stats::all/k10_n1000    time:   [25.206 µs 25.520 µs 26.008 µs]
+stats::all/k50_n1000    time:   [140.16 µs 145.45 µs 153.03 µs]
+
+stats::array/k1_n10000  time:   [16.537 µs 17.437 µs 19.266 µs]
+stats::array/k10_n1000  time:   [15.531 µs 16.423 µs 17.718 µs]
+</pre>
+
+<p>
+  Notes:
+  <br>
+  • <em>array</em> variants avoid locking and are faster as expected.
+  <br>
+  • Multi-key <em>all</em> shows overhead from aggregation across keys.
+  <br>
+</p>
+</details>
+
+<details>
+<summary><b>Allocations (placeholder)</b></summary>
+
+<p>
+  <em>TODO: Fill in allocation counts/bytes after running Instruments (Allocations) on benches:</em>
+  <br>
+  • <code>overhead</code> — core hot path (time!/measure)
+  <br>
+  • <code>stats</code> — aggregation paths
+  <br><br>
+  Suggested command:
+  <br>
+  <code>cargo instruments --bench overhead --template Allocations --time-limit 10</code>
+  <br>
+  <code>cargo instruments --bench stats --template Allocations --time-limit 10</code>
+  <br><br>
+  Record: allocations/iteration and total bytes.
+  <br>
+  Example table to complete:
+  <br>
+  <pre>
+  bench              allocs/iter   bytes/iter
+  overhead           [TODO]        [TODO]
+  stats              [TODO]        [TODO]
+  </pre>
+  <br>
+  Notes: aim for zero allocs on hot paths; any non-zero should be explained (e.g., formatting, map growth).
+  <br>
+  
+</p>
+</details>
+
+<details>
+<summary><b>Contention Profile (placeholder)</b></summary>
+
+<p>
+  <em>TODO: Fill in top hotspots after running Instruments (Time Profiler) for <code>collector_contention</code> across threads [1,2,4,8,16].</em>
+  <br><br>
+  Suggested command:
+  <br>
+  <code>cargo bench --bench collector_contention</code>
+  <br>
+  <code>cargo instruments --bench collector_contention --template "Time Profiler" --time-limit 15</code>
+  <br><br>
+  Capture per-scenario:
+  <br>
+  • <strong>single_key</strong> (worst-case)
+  <br>
+  • <strong>many_keys</strong> (reduced contention)
+  <br><br>
+  Example summary to complete:
+  <pre>
+  threads  scenario      top hotspots (function -> %time)
+  1        single_key    [TODO]
+  2        single_key    [TODO]
+  4        single_key    [TODO]
+  8        single_key    [TODO]
+  16       single_key    [TODO]
+
+  1        many_keys     [TODO]
+  2        many_keys     [TODO]
+  4        many_keys     [TODO]
+  8        many_keys     [TODO]
+  16       many_keys     [TODO]
+  </pre>
+  <br>
+  Notes: identify lock hotspots (e.g., map lookups, RwLock/Mutex), quantify scaling deltas.
+  <br>
+</p>
+</details>
+
+<details>
+<summary><b>Contention: benches/collector_contention.rs</b></summary>
+
+<p>
+  Includes two scenarios across thread counts [1, 2, 4, 8, 16]:
+  <br>
+  • <strong>single_key</strong>: worst-case contention (all threads record to one key)
+  <br>
+  • <strong>many_keys</strong>: thread-local key per thread to reduce contention
+  <br>
+  Run locally:
+  <br>
+  <code>cargo bench --bench collector_contention</code>
+  <br>
+  Results will be summarized here after profiling runs.
+  <br>
+</p>
+</details>
+
+<br>
 <hr>
 <br>
 

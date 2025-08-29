@@ -326,25 +326,28 @@ impl Histogram {
     /// assert!(p50 >= 49000 && p50 <= 51000, "p50={}", p50);
     /// assert_eq!(histogram.percentile(1.0), Some(100000)); // Max
     /// ```
+    ///
+    /// # Panics
+    ///
+    /// This function does not panic. Internal uses of `unwrap()` are guarded by an
+    /// early return when the histogram is empty (`total_count == 0`), ensuring
+    /// that `min()` and `max()` return `Some` values before unwrapping.
     #[inline]
     pub fn percentile(&self, percentile: f64) -> Option<u64> {
         // Input validation
-        if !(0.0..=1.0).contains(&percentile) {
-            return None;
-        }
-
         let total_count = self.total_count.load(MEMORY_ORDER);
         if total_count == 0 {
             return None;
         }
 
         // Handle edge cases
+        let p = percentile.clamp(0.0, 1.0);
         #[allow(clippy::float_cmp)]
-        if percentile == 0.0 {
+        if p == 0.0 {
             return self.min();
         }
         #[allow(clippy::float_cmp)]
-        if percentile == 1.0 {
+        if p == 1.0 {
             return self.max();
         }
 
@@ -357,10 +360,14 @@ impl Histogram {
                 clippy::cast_precision_loss
             )]
             {
-                (percentile * total_count as f64).ceil() as u64
+                (p * total_count as f64).ceil() as u64
             }
         };
         let mut current_count = 0u64;
+
+        // Pre-compute observed range for clamping
+        let min_v = self.min()?;
+        let max_v = self.max()?;
 
         // Scan linear buckets (0-1023ns) for exact nanosecond precision
         for (value, bucket) in self.linear_buckets.iter().enumerate() {
@@ -371,7 +378,8 @@ impl Histogram {
 
             current_count += count;
             if current_count >= target_count {
-                return Some(value as u64);
+                let v = value as u64;
+                return Some(v.clamp(min_v, max_v));
             }
         }
 
@@ -392,11 +400,15 @@ impl Histogram {
 
                 if count > 0 && bucket_width > 0 {
                     // Use 1-based rank inside the bucket: offset should be (k-1)
-                    let interpolated_offset =
-                        (position_in_bucket.saturating_sub(1) * bucket_width) / count;
-                    return Some(bucket_start.saturating_add(interpolated_offset));
+                    // Compute with u128 to avoid intermediate overflow
+                    let num = (u128::from(position_in_bucket.saturating_sub(1)))
+                        * u128::from(bucket_width);
+                    let den = u128::from(count);
+                    let interpolated_offset = u64::try_from(num / den).unwrap_or(u64::MAX);
+                    let v = bucket_start.saturating_add(interpolated_offset);
+                    return Some(v.clamp(min_v, max_v));
                 }
-                return Some(bucket_start);
+                return Some(bucket_start.clamp(min_v, max_v));
             }
 
             current_count += count;
@@ -475,6 +487,11 @@ impl Histogram {
     /// println!("P50: {:?}, P95: {:?}, P99: {:?}, P99.9: {:?}",
     ///          percentiles[0], percentiles[1], percentiles[2], percentiles[3]);
     /// ```
+    ///
+    /// # Panics
+    ///
+    /// This function does not panic. Internal unwraps on `min()`/`max()` are only
+    /// reached after confirming the histogram is non-empty, ensuring those values exist.
     #[inline]
     pub fn percentiles(&self, percentiles: &[f64]) -> Vec<Option<u64>> {
         let total_count = self.total_count.load(MEMORY_ORDER);
@@ -488,26 +505,23 @@ impl Histogram {
         let mut targets: Vec<(usize, u64)> = percentiles
             .iter()
             .enumerate()
-            .filter_map(|(i, &p)| {
-                if (0.0..=1.0).contains(&p) {
-                    let target = if p == 0.0 {
-                        0
-                    } else if (p - 1.0).abs() < f64::EPSILON {
-                        total_count
-                    } else {
-                        #[allow(
-                            clippy::cast_possible_truncation,
-                            clippy::cast_sign_loss,
-                            clippy::cast_precision_loss
-                        )]
-                        {
-                            (p * total_count as f64).ceil() as u64
-                        }
-                    };
-                    Some((i, target))
+            .map(|(i, &p_in)| {
+                let p = p_in.clamp(0.0, 1.0);
+                let target = if p == 0.0 {
+                    0
+                } else if (p - 1.0).abs() < f64::EPSILON {
+                    total_count
                 } else {
-                    None
-                }
+                    #[allow(
+                        clippy::cast_possible_truncation,
+                        clippy::cast_sign_loss,
+                        clippy::cast_precision_loss
+                    )]
+                    {
+                        (p * total_count as f64).ceil() as u64
+                    }
+                };
+                (i, target)
             })
             .collect();
 
@@ -523,6 +537,10 @@ impl Histogram {
             target_idx += 1;
         }
 
+        // Pre-compute observed range for clamping
+        let min_v = self.min();
+        let max_v = self.max();
+
         // Process linear buckets
         for (value, bucket) in self.linear_buckets.iter().enumerate() {
             let count = bucket.load(MEMORY_ORDER);
@@ -533,7 +551,8 @@ impl Histogram {
             current_count += count;
 
             while target_idx < targets.len() && current_count >= targets[target_idx].1 {
-                results[targets[target_idx].0] = Some(value as u64);
+                let v = value as u64;
+                results[targets[target_idx].0] = Some(v.clamp(min_v.unwrap(), max_v.unwrap()));
                 target_idx += 1;
             }
         }
@@ -553,15 +572,18 @@ impl Histogram {
                 let bucket_width = bucket_end.saturating_sub(bucket_start);
 
                 let interpolated_value = if count > 0 && bucket_width > 0 {
-                    // 1-based rank; use (k-1) for offset
-                    let interpolated_offset =
-                        (position_in_bucket.saturating_sub(1) * bucket_width) / count;
+                    // 1-based rank; use (k-1) for offset. Do math in u128 to avoid overflow.
+                    let num = (u128::from(position_in_bucket.saturating_sub(1)))
+                        * u128::from(bucket_width);
+                    let den = u128::from(count);
+                    let interpolated_offset = u64::try_from(num / den).unwrap_or(u64::MAX);
                     bucket_start.saturating_add(interpolated_offset)
                 } else {
                     bucket_start
                 };
 
-                results[targets[target_idx].0] = Some(interpolated_value);
+                let v = interpolated_value.clamp(min_v.unwrap(), max_v.unwrap());
+                results[targets[target_idx].0] = Some(v);
                 target_idx += 1;
             }
 
@@ -572,6 +594,14 @@ impl Histogram {
         while target_idx < targets.len() {
             results[targets[target_idx].0] = self.max();
             target_idx += 1;
+        }
+
+        // Ensure any input with p clamped to approximately 1.0 returns true max (not interpolated)
+        for (i, &p_in) in percentiles.iter().enumerate() {
+            let p = p_in.clamp(0.0, 1.0);
+            if (p - 1.0).abs() < f64::EPSILON {
+                results[i] = self.max();
+            }
         }
 
         results
@@ -746,9 +776,9 @@ mod tests {
         assert_eq!(hist.percentile(0.99), Some(99));
         assert_eq!(hist.percentile(1.0), Some(100));
 
-        // Test invalid percentiles
-        assert_eq!(hist.percentile(-0.1), None);
-        assert_eq!(hist.percentile(1.1), None);
+        // Inputs out of range are clamped to [0.0, 1.0]
+        assert_eq!(hist.percentile(-0.1), Some(1));
+        assert_eq!(hist.percentile(1.1), Some(100));
     }
 
     #[test]

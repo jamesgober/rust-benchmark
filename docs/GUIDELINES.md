@@ -57,6 +57,7 @@
 - **DRY**: Centralized timing logic, no duplication
 - **KISS**: Simple API, complex implementation
 - **YAGNI**: Start minimal, expand based on real needs
+- **MODULAR**: Libraries must be modular with clear boundaries and minimal coupling; prefer small, composable units with feature-gated extensions
 
 ## 📏 DEVELOPMENT STANDARDS
 
@@ -165,7 +166,7 @@ static DATA: Mutex<HashMap<String, u64>> = Mutex::new(HashMap::new());
 Before ANY code is written:
 - [ ] Will this work with zero overhead when disabled?
 - [ ] Is this the simplest solution that works?
-- [ unexpected char ��️ and expect behavior edge cases
+- [ ] Are expected behavior and edge cases clearly defined?
 - [ ] Does this maintain backward compatibility?
 - [ ] Are errors handled gracefully?
 

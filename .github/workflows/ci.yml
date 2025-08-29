@@ -94,6 +94,35 @@ jobs:
             cargo test --workspace --no-default-features --features "${{ matrix.features }}"
           fi
 
+  # Optimization-level matrix to catch codegen-sensitive issues
+  opt-matrix:
+    name: Opt-Level Matrix
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        opt: ["0", "1", "2", "3", "s", "z"]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Test workspace (opt=${{ matrix.opt }})
+        env:
+          RUSTFLAGS: -C opt-level=${{ matrix.opt }}
+        run: |
+          echo "RUSTFLAGS=$RUSTFLAGS"
+          cargo test --workspace -q
+
+      - name: Test workspace all-features (opt=${{ matrix.opt }})
+        env:
+          RUSTFLAGS: -C opt-level=${{ matrix.opt }}
+        run: |
+          echo "RUSTFLAGS=$RUSTFLAGS"
+          cargo test --workspace --all-features -q
+
   # Assembly inspection (artifacts for manual review)
   assembly:
     name: Assembly Inspection

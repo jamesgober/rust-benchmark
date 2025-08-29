@@ -5,6 +5,23 @@ use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 
 /// Basic statistics for a set of measurements.
+///
+/// # Examples
+/// ```
+/// use benchmark::{Collector, Duration, Measurement};
+///
+/// // Collect three measurements for the same name
+/// let c = Collector::new();
+/// c.record_duration("op", Duration::from_nanos(1_000));
+/// c.record_duration("op", Duration::from_nanos(2_000));
+/// c.record_duration("op", Duration::from_nanos(3_000));
+///
+/// let s = c.stats("op").unwrap();
+/// assert_eq!(s.count, 3);
+/// assert_eq!(s.min.as_nanos(), 1_000);
+/// assert_eq!(s.max.as_nanos(), 3_000);
+/// assert_eq!(s.mean.as_nanos(), 2_000);
+/// ```
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Stats {
     /// Number of measurements.
@@ -31,6 +48,14 @@ pub struct Collector {
 
 impl Collector {
     /// Creates a new collector.
+    ///
+    /// # Examples
+    /// ```
+    /// use benchmark::Collector;
+    /// let c = Collector::new();
+    /// // initially empty
+    /// assert!(c.stats("missing").is_none());
+    /// ```
     pub fn new() -> Self {
         Self {
             measurements: Arc::new(RwLock::new(HashMap::new())),
@@ -38,6 +63,14 @@ impl Collector {
     }
 
     /// Creates a new collector with pre-allocated capacity.
+    ///
+    /// This can reduce rehashing when you know the number of metric names.
+    ///
+    /// # Examples
+    /// ```
+    /// use benchmark::Collector;
+    /// let _c = Collector::with_capacity(32);
+    /// ```
     pub fn with_capacity(capacity: usize) -> Self {
         Self {
             measurements: Arc::new(RwLock::new(HashMap::with_capacity(capacity))),
@@ -49,6 +82,15 @@ impl Collector {
     /// # Panics
     ///
     /// Panics if the lock is poisoned.
+    ///
+    /// # Examples
+    /// ```
+    /// use benchmark::{Collector, Duration, Measurement};
+    /// let c = Collector::new();
+    /// let m = Measurement::new("work", Duration::from_nanos(123), 0);
+    /// c.record(&m);
+    /// assert_eq!(c.stats("work").unwrap().count, 1);
+    /// ```
     pub fn record(&self, measurement: &Measurement) {
         let mut lock = self.measurements.write().unwrap();
         lock.entry(measurement.name)
@@ -61,6 +103,16 @@ impl Collector {
     /// # Panics
     ///
     /// Panics if the lock is poisoned.
+    ///
+    /// # Examples
+    /// ```
+    /// use benchmark::{Collector, Duration};
+    /// let c = Collector::new();
+    /// c.record_duration("db_query", Duration::from_nanos(5_000));
+    /// let s = c.stats("db_query").unwrap();
+    /// assert_eq!(s.count, 1);
+    /// assert_eq!(s.total.as_nanos(), 5_000);
+    /// ```
     pub fn record_duration(&self, name: &'static str, duration: Duration) {
         let mut lock = self.measurements.write().unwrap();
         lock.entry(name).or_default().push(duration);
@@ -73,6 +125,17 @@ impl Collector {
     /// # Panics
     ///
     /// Panics if the lock is poisoned.
+    ///
+    /// # Examples
+    /// ```
+    /// use benchmark::{Collector, Duration};
+    /// let c = Collector::new();
+    /// assert!(c.stats("x").is_none());
+    /// c.record_duration("x", Duration::from_nanos(10));
+    /// c.record_duration("x", Duration::from_nanos(20));
+    /// let s = c.stats("x").unwrap();
+    /// assert_eq!(s.count, 2);
+    /// ```
     pub fn stats(&self, name: &str) -> Option<Stats> {
         // Clone the vector under a read lock to minimize lock hold time, then compute outside the lock
         let durations: Vec<Duration> = {
@@ -119,6 +182,18 @@ impl Collector {
     /// # Panics
     ///
     /// Panics if the lock is poisoned.
+    ///
+    /// # Examples
+    /// ```
+    /// use benchmark::{Collector, Duration};
+    /// let c = Collector::new();
+    /// c.record_duration("a", Duration::from_nanos(1));
+    /// c.record_duration("b", Duration::from_nanos(2));
+    /// let mut all = c.all_stats();
+    /// all.sort_by(|l, r| l.0.cmp(&r.0));
+    /// assert_eq!(all.len(), 2);
+    /// assert_eq!(all[0].0, "a");
+    /// ```
     pub fn all_stats(&self) -> Vec<(String, Stats)> {
         // Snapshot names and their vectors under a read lock, then compute outside to avoid nested locking
         let snapshot: Vec<(&'static str, Vec<Duration>)> = {
@@ -170,6 +245,16 @@ impl Collector {
     /// # Panics
     ///
     /// Panics if the lock is poisoned.
+    ///
+    /// # Examples
+    /// ```
+    /// use benchmark::{Collector, Duration};
+    /// let c = Collector::new();
+    /// c.record_duration("t", Duration::from_nanos(1));
+    /// assert!(c.stats("t").is_some());
+    /// c.clear();
+    /// assert!(c.stats("t").is_none());
+    /// ```
     pub fn clear(&self) {
         let mut lock = self.measurements.write().unwrap();
         lock.clear();
@@ -180,6 +265,15 @@ impl Collector {
     /// # Panics
     ///
     /// Panics if the lock is poisoned.
+    ///
+    /// # Examples
+    /// ```
+    /// use benchmark::{Collector, Duration};
+    /// let c = Collector::new();
+    /// c.record_duration("x", Duration::from_nanos(1));
+    /// c.clear_name("x");
+    /// assert!(c.stats("x").is_none());
+    /// ```
     pub fn clear_name(&self, name: &str) {
         let mut lock = self.measurements.write().unwrap();
         lock.remove(name);

@@ -150,7 +150,7 @@ benchmark = { version = "0.5.8", default-features = false }
 
 ### Installation via terminal:
 ```bash
-# or set default directly. 
+# disable default features (minimal core)
 cargo add benchmark --no-default-features
 ```
 > ⚙️ Using the `cargo add` command.

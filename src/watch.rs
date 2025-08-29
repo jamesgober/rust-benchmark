@@ -33,6 +33,17 @@ const DEFAULT_HIGHEST: u64 = 3_600_000_000_000;
 /// Holds per-metric internal `Histogram` instances and provides efficient
 /// recording and percentile queries via `snapshot()`. Cheap to clone, safe to
 /// share across threads and async tasks.
+///
+/// # Examples
+/// Basic record and snapshot:
+/// ```
+/// use benchmark::Watch;
+/// let w = Watch::new();
+/// w.record("op", 1_500);
+/// let s = &w.snapshot()["op"];
+/// assert_eq!(s.count, 1);
+/// assert_eq!(s.min, 1_500);
+/// ```
 #[derive(Clone)]
 pub struct Watch {
     inner: Arc<Inner>,
@@ -109,11 +120,26 @@ impl Watch {
     }
 
     /// Create a new Watch with sensible defaults.
+    ///
+    /// # Examples
+    /// ```
+    /// use benchmark::Watch;
+    /// let w = Watch::new();
+    /// // empty initially
+    /// assert!(w.snapshot().is_empty());
+    /// ```
     pub fn new() -> Self {
         Self::with_bounds(DEFAULT_LOWEST, DEFAULT_HIGHEST)
     }
 
     /// Create a builder to configure histogram bounds and precision.
+    ///
+    /// # Examples
+    /// ```
+    /// use benchmark::Watch;
+    /// let w = Watch::builder().lowest(10).highest(1_000_000).build();
+    /// let _ = w; // built successfully
+    /// ```
     #[inline]
     pub fn builder() -> WatchBuilder {
         WatchBuilder::new()
@@ -123,6 +149,13 @@ impl Watch {
     ///
     /// `lowest_discernible`: smallest value discernible (ns)
     /// `highest_trackable`: largest value tracked (ns)
+    ///
+    /// # Examples
+    /// ```
+    /// use benchmark::Watch;
+    /// let w = Watch::with_bounds(5, 10_000);
+    /// let _ = w.snapshot();
+    /// ```
     pub fn with_bounds(lowest_discernible: u64, highest_trackable: u64) -> Self {
         let lowest = lowest_discernible.max(1);
         let highest = highest_trackable.max(lowest + 1);
@@ -141,6 +174,14 @@ impl Watch {
     ///
     /// # Panics
     /// Panics if the internal lock is poisoned from a prior panic.
+    ///
+    /// # Examples
+    /// ```
+    /// use benchmark::Watch;
+    /// let w = Watch::new();
+    /// w.record("t", 42);
+    /// assert_eq!(w.snapshot()["t"].count, 1);
+    /// ```
     pub fn record(&self, name: &str, duration_ns: u64) {
         // Clamp to histogram range to avoid errors.
         let ns = duration_ns.clamp(self.inner.lowest, self.inner.highest);
@@ -166,6 +207,17 @@ impl Watch {
     }
 
     /// Record elapsed time since `start` for a metric name.
+    ///
+    /// # Examples
+    /// ```
+    /// use benchmark::Watch;
+    /// use std::time::Instant;
+    /// let w = Watch::new();
+    /// let start = Instant::now();
+    /// // do work
+    /// let ns = w.record_instant("io", start);
+    /// assert!(ns >= 0);
+    /// ```
     pub fn record_instant(&self, name: &str, start: Instant) -> u64 {
         let ns_u128 = start.elapsed().as_nanos();
         // Convert to u64 using infallible saturating via try_from to satisfy clippy
@@ -185,6 +237,17 @@ impl Watch {
     ///
     /// # Panics
     /// Panics if the internal lock is poisoned from a prior panic.
+    ///
+    /// # Examples
+    /// ```
+    /// use benchmark::Watch;
+    /// let w = Watch::new();
+    /// w.record("rpc", 10);
+    /// w.record("rpc", 20);
+    /// let m = &w.snapshot()["rpc"];
+    /// assert_eq!(m.count, 2);
+    /// assert!(m.min <= m.p50 && m.p50 <= m.max);
+    /// ```
     pub fn snapshot(&self) -> HashMap<String, WatchStats> {
         let items: Vec<(Arc<str>, Arc<Histogram>)> = {
             let map = self.read_hist();
@@ -246,6 +309,16 @@ impl Watch {
     ///
     /// # Panics
     /// Panics if the internal lock is poisoned from a prior panic.
+    ///
+    /// # Examples
+    /// ```
+    /// use benchmark::Watch;
+    /// let w = Watch::new();
+    /// w.record("a", 1);
+    /// assert!(!w.snapshot().is_empty());
+    /// w.clear();
+    /// assert!(w.snapshot().is_empty());
+    /// ```
     pub fn clear(&self) {
         let mut map = self.write_hist();
         map.clear();
@@ -255,6 +328,15 @@ impl Watch {
     ///
     /// # Panics
     /// Panics if the internal lock is poisoned from a prior panic.
+    ///
+    /// # Examples
+    /// ```
+    /// use benchmark::Watch;
+    /// let w = Watch::new();
+    /// w.record("x", 1);
+    /// w.clear_name("x");
+    /// assert!(!w.snapshot().contains_key("x"));
+    /// ```
     pub fn clear_name(&self, name: &str) {
         let mut map = self.write_hist();
         map.remove(name);
@@ -277,6 +359,12 @@ impl Default for WatchBuilder {
 
 impl WatchBuilder {
     /// Start a builder with default bounds: 1ns..~1h, 3 significant figures.
+    ///
+    /// # Examples
+    /// ```
+    /// use benchmark::WatchBuilder;
+    /// let _w = WatchBuilder::new().lowest(1).highest(1_000_000).build();
+    /// ```
     #[inline]
     pub fn new() -> Self {
         Self {

@@ -3,6 +3,7 @@
 use benchmark::*;
 
 #[test]
+#[cfg_attr(miri, ignore = "sleep-based timing is slow/flaky under Miri")]
 fn test_basic_timing() {
     let (result, duration) = measure(|| {
         std::thread::sleep(std::time::Duration::from_millis(1));
@@ -40,6 +41,10 @@ fn test_time_macro() {
 }
 
 #[test]
+#[cfg_attr(
+    miri,
+    ignore = "thread scheduling/timing can be non-deterministic under Miri"
+)]
 fn test_collector_thread_safety() {
     use std::sync::Arc;
     use std::thread;

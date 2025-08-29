@@ -3,10 +3,7 @@
     <br>
     <b>Benchmark</b>
     <br>
-    <sub>
-        <sup>RUST LIBRARY</sup>
-    </sub>
-    <br>
+    <sub><sup>RUST LIBRARY</sup></sub>
 </h1>
 <div align="center">
     <a href="https://crates.io/crates/benchmark"><img alt="Crates.io" src="https://img.shields.io/crates/v/benchmark"></a>
@@ -114,7 +111,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-benchmark = "0.5.8"
+benchmark = "0.6.0"
 ```
 
 <br>
@@ -126,17 +123,53 @@ benchmark = "0.5.8"
 [dependencies]
 
 # Enables Production & Development.
-benchmark = { version = "0.5.8", features = ["standard"] }
+benchmark = { version = "0.6.0", features = ["standard"] }
+```
+
+<br>
+
+### Production metrics (std + metrics)
+Enable production observability using `Watch`/`Timer` or the `stopwatch!` macro.
+
+Cargo features:
+```toml
+[dependencies]
+benchmark = { version = "0.6.0", features = ["std", "metrics"] }
+```
+
+Record with `Timer` (auto-record on drop):
+```rust
+use benchmark::{Watch, Timer};
+
+let watch = Watch::new();
+{
+    let _t = Timer::new(watch.clone(), "db.query");
+    // ... do the work to be measured ...
+} // recorded once on drop
+
+let s = &watch.snapshot()["db.query"];
+assert!(s.count >= 1);
+```
+
+Or use the `stopwatch!` macro:
+```rust
+use benchmark::{Watch, stopwatch};
+
+let watch = Watch::new();
+stopwatch!(watch, "render", {
+    // ... work to measure ...
+});
+assert!(watch.snapshot()["render"].count >= 1);
 ```
 
 <br>
 
 ### Disable Default Features
-> Enables all standard benchmark features.
+> True zero-overhead core timing only.
 ```toml
 [dependencies]
 # Disable default features for true zero-overhead
-benchmark = { version = "0.5.8", default-features = false }
+benchmark = { version = "0.6.0", default-features = false }
 ```
 <br>
 
@@ -271,6 +304,7 @@ This repository includes Criterion benchmarks that measure the overhead of the p
   <li><b>Zero durations</b>: Some operations can complete so fast that <code>elapsed()</code> may be 0ns on some platforms. The API preserves this and returns <code>Duration::ZERO</code>. If you need a floor for visualization, clamp in your presentation layer.</li>
   <li><b>Saturating conversions</b>: <code>Watch::record_instant()</code> converts <code>as_nanos()</code> to <code>u64</code> using saturating semantics, avoiding panics on extremely large values.</li>
   <li><b>Range clamping</b>: <code>Watch::record()</code> clamps input to histogram bounds, ensuring valid recording and protecting against out-of-range values.</li>
+  <li><b>Percentile input clamping</b>: Percentile queries (e.g., <code>Histogram::percentile(q)</code>) clamp <code>q</code> to <b>[0.0, 1.0]</b>. Out-of-range inputs map to min/max (e.g., <code>-0.1 → 0.0</code>, <code>1.2 → 1.0</code>).</li>
   <li><b>Drop safety</b>: <code>Timer</code> records exactly once. It guards against double-record by storing <code>Option&lt;Instant&gt;</code> and recording on <code>Drop</code> even during unwinding.</li>
   <li><b>Empty datasets</b>: <code>Watch::snapshot()</code> and <code>Collector</code> handle empty sets defensively. Snapshots for empty histograms return zeros; <code>Collector::stats()</code> returns <code>None</code> for missing keys.</li>
   <li><b>Overflow protection</b>: <code>Collector</code> uses <code>saturating_add</code> for total accumulation and 128-bit nanosecond storage in <code>Duration</code> to provide ample headroom.</li>

@@ -23,7 +23,6 @@
 </div>
 
 <br>
-
 > Note: Perf-sensitive tests/benches are skipped by default. To opt in, run with feature `perf-tests` and env `PERF_TESTS=1`. See "Performance Tests (opt-in)" below.
 
 ## Table of Contents
@@ -33,6 +32,7 @@
   - [Duration](#duration)
   - [Measurement](#measurement)
   - [Stats](#stats)
+  - [Histogram](#histogram)
 - [Collector](#collector)
 - [Functions](#functions)
   - [measure](#measure)
@@ -76,7 +76,7 @@
 Add this to your `Cargo.toml`:
 ```toml
 [dependencies]
-benchmark = "0.5.8"
+benchmark = "0.6.0"
 ```
 
 <br>
@@ -97,7 +97,7 @@ Add this to your `Cargo.toml`:
 ```toml
 [dependencies]
 # Disable default features for true zero-overhead
-benchmark = { version = "0.5.8", default-features = false }
+benchmark = { version = "0.6.0", default-features = false }
 ```
 
 <br>
@@ -174,6 +174,27 @@ Basic statistics for a set of measurements. Available with `std` feature.
 
 - Fields: `count: u64`, `total: Duration`, `min: Duration`, `max: Duration`, `mean: Duration`
 - Construction: Returned by `Collector::stats()`/`Collector::all_stats()`.
+
+<br>
+
+### Histogram
+Fixed-range, high-performance histogram used by production metrics. Available with `std` feature at `benchmark::histogram`.
+
+```rust
+use benchmark::histogram::Histogram; // requires feature = "std"
+
+let mut h = Histogram::new(1, 1_000_000); // bounds: 1ns..=1_000_000ns
+for _ in 0..1000 { h.record(500); }
+assert_eq!(h.count(), 1000);
+assert_eq!(h.percentile(50.0), 500);
+let ps = h.percentiles(&[50.0, 90.0, 99.0]);
+assert!(ps[2] >= ps[0]);
+```
+
+- Constructors: `new(lowest: u64, highest: u64)`
+- Recording: `record(ns: u64)`, `record_duration(Duration)`
+- Queries: `count()`, `min()`, `max()`, `median()`, `percentile(q)`, `percentiles(&qs)`
+- Notes: Inputs are clamped to bounds; percentile arguments `q` are clamped to [0.0, 1.0] (e.g., -0.1 -> 0.0, 1.2 -> 1.0); choose bounds to your expected SLOs for precision.
 
 <br>
 
@@ -399,7 +420,7 @@ Provides production-friendly timing and percentile statistics with negligible ov
 Installation with feature:
 ```toml
 [dependencies]
-benchmark = { version = "0.5.8", features = ["standard"] }
+benchmark = { version = "0.6.0", features = ["standard"] }
 ```
 
 ### Watch
@@ -463,6 +484,7 @@ async fn main() {
 Notes:
 - Percentiles are computed from histograms cloned outside locks for low contention.
 - Durations are clamped to histogram bounds; defaults cover 1ns..~1h.
+- Percentile inputs are clamped to [0.0, 1.0]; out-of-range queries map to min/max.
 - Internal histogram: fixed-size, lock-free recording with nanosecond precision; zero external dependencies.
 
 ### Examples and Use-cases

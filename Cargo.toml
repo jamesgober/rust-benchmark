@@ -10,7 +10,7 @@
 #╚═══════════╩══════════════════════════════════╩════════════╝
 [package]
 name    = "benchmark"
-version = "0.5.8"
+version = "0.6.0"
 edition = "2021"
 
 # Minimum Supported Rust Version (MSRV)
@@ -60,6 +60,7 @@ benchmark   = [] # Benchmarking enabled (can be disabled for true zero-overhead)
 metrics     = ["std"] # Use production metrics (Watch/Timer) and Rust standard library
 # Gate perf-sensitive unit tests/benches so they can be opted into explicitly
 perf-tests  = []
+long-tests  = []
 
 # Use parking_lot for faster RwLock in hot paths
 parking-lot-locks = ["dep:parking_lot"]
@@ -113,3 +114,4 @@ parking_lot = { version = "0.12", optional = true }
 tokio     = { version = "1", features = ["macros", "rt-multi-thread", "time"] }
 trybuild  = "1.0"
 criterion = "0.5"
+proptest  = "1"

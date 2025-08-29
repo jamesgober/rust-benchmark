@@ -1,6 +1,6 @@
 <h1 align="center">
     <img width="90px" height="auto" src="https://raw.githubusercontent.com/jamesgober/jamesgober/main/media/icons/hexagon-3.svg" alt="Triple Hexagon">
-    <br><b>Benchmark</b><br>
+    <br><b>Metrics</b><br>
     <sub><sup>
         METRICS FEATURE
     </sup></sub>
@@ -18,7 +18,8 @@
 </div>
 
 <br>
-<br>
+
+> Feature gating: `metrics` is opt-in. Enable with `-F metrics` or via the convenience `-F standard` set. Not included in the minimal default without `standard`.
 
 <p>
 The <b>metrics</b> feature provides production-grade latency metrics with near-zero overhead. It offers lock-free recording, nanosecond precision, configurable bounds, and percentile snapshots (p50/p90/p95/p99/p999) using a built-in, zero-dependency histogram.

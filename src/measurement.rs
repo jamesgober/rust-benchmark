@@ -17,6 +17,15 @@ pub struct Measurement {
 
 impl Measurement {
     /// Creates a new measurement.
+    ///
+    /// # Examples
+    /// ```
+    /// use benchmark::{Measurement, Duration};
+    /// let m = Measurement::new("op", Duration::from_nanos(123), 1);
+    /// assert_eq!(m.name, "op");
+    /// assert_eq!(m.duration.as_nanos(), 123);
+    /// assert_eq!(m.timestamp, 1);
+    /// ```
     pub fn new(name: &'static str, duration: Duration, timestamp: u128) -> Self {
         Self {
             name,
@@ -26,6 +35,15 @@ impl Measurement {
     }
 
     /// Creates a new measurement with zero duration and timestamp.
+    ///
+    /// # Examples
+    /// ```
+    /// use benchmark::Measurement;
+    /// let m = Measurement::zero("noop");
+    /// assert_eq!(m.name, "noop");
+    /// assert_eq!(m.duration.as_nanos(), 0);
+    /// assert_eq!(m.timestamp, 0);
+    /// ```
     pub fn zero(name: &'static str) -> Self {
         Self {
             name,

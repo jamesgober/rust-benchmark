@@ -18,7 +18,8 @@
 </div>
 
 <br>
-<br>
+
+> Feature gating: `benchmark` is enabled by default via the crate's default features. For a minimal core, disable defaults; opt back in with `-F benchmark`.
 
 <p>
 The <b>benchmark</b> feature provides a lightweight, statistically-sound toolkit for development-time performance testing. It includes timing helpers, collectors, and summary statistics designed to detect regressions, compare implementations, and measure realistic variability across iterations.

@@ -24,6 +24,8 @@
 
 <br>
 
+> Feature gating: Production metrics are enabled by the `metrics` feature (or by the convenience `standard` feature). They are not part of the minimal default unless `standard` is selected.
+
 <p>
     Production performance metrics for latency and throughput critical paths. Use <code>Watch</code>, <code>Timer</code>, and <code>stopwatch!</code> to record nanosecond timings with negligible overhead and export percentile snapshots for dashboards and alerts.
 </p>

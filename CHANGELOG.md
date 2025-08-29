@@ -11,6 +11,13 @@
 ## [Unreleased]
 
 
+
+
+
+
+<br>
+
+## [0.6.0] - 2025-08-29
 ### Added
 - Scheduled perf workflow: `.github/workflows/perf.yml`
   - Runs twice weekly (Sun/Wed 02:00 UTC) and via manual dispatch
@@ -28,6 +35,28 @@
 - CI perf workflow restricted to `main` and protected with concurrency guard
 - Replaced `#[inline(always)]` with `#[inline]` for hot-path methods in `src/histogram.rs`
   - Resolves `clippy::inline_always` under `-D warnings` while preserving optimizer freedom
+- `docs/API.md`: moved the Histogram section under “Types → Stats → Histogram” and added a runnable example with feature-gating notes
+- `docs/features/README.md`: clarified `--no-default-features` usage comment and guidance to opt back in with `-F benchmark` / `-F metrics`
+- `docs/BENCHMARK.md` and `docs/METRICS.md`: added consistent feature-gating notes near the top
+- `docs/features/BENCHMARK.md` and `docs/features/METRICS.md`: added consistent feature-gating notes; fixed header label in Metrics page
+
+### Documentation
+- Doc sweep for clarity and consistency on feature gates across Benchmark and Metrics docs
+- Emphasized opt-in perf gates: `perf-tests` with `PERF_TESTS=1`
+- Clarified and emphasized that histogram percentile inputs are clamped to [0.0, 1.0] across `README.md` and `docs/API.md`. Out-of-range inputs map to min/max.
+
+### Fixed
+- Clippy lints in benches:
+  - `benches/timers.rs`: use assign-op `+=` pattern
+  - `benches/histogram_hot.rs`: removed unnecessary casts
+- Added explicit ignore reasons for perf-gated tests/benches in `src/histogram.rs`
+- Percentile interpolation overflow in `src/histogram.rs` when handling large bucket widths/counts: switched to u128 intermediates to prevent overflow.
+- Ensured percentile 1.0 returns the true maximum in `Histogram::percentiles()` (explicit post-pass to set p==1.0 to max), aligning with `percentile(1.0)` behavior.
+
+### Maintenance
+- CI locally: `cargo fmt --all -- --check`, `cargo clippy --all-targets --all-features`, `cargo test --all-features`, `cargo doc --no-deps`
+
+
 
 
 <br>
@@ -202,7 +231,9 @@ Initial pre-dev release for backup.
 
 
 
-[Unreleased]: https://github.com/jamesgober/rust-benchmark/compare/v0.5.8...HEAD
+[Unreleased]: https://github.com/jamesgober/rust-benchmark/compare/v0.6.0...HEAD
+[0.8.0]: https://github.com/jamesgober/rust-benchmark/compare/v0.7.0...v0.8.0
+[0.7.0]: https://github.com/jamesgober/rust-benchmark/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/jamesgober/rust-benchmark/compare/v0.5.8...v0.6.0
 [0.5.8]: https://github.com/jamesgober/rust-benchmark/compare/v0.5.7...v0.5.8
 [0.5.7]: https://github.com/jamesgober/rust-benchmark/compare/v0.5.0...v0.5.7

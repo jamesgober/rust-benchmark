@@ -7,6 +7,17 @@ use core::fmt;
 /// This type uses a single `u128` field to store nanoseconds, providing
 /// 584 years of range with nanosecond precision. This design is optimized
 /// for simplicity and cache efficiency.
+///
+/// # Examples
+/// ```
+/// use benchmark::Duration;
+/// let d = Duration::from_nanos(1_234_567_890);
+/// assert_eq!(d.as_nanos(), 1_234_567_890);
+/// assert_eq!(d.as_micros(), 1_234_567);
+/// assert_eq!(d.as_millis(), 1_234);
+/// assert!((d.as_secs_f64() - 1.234_567_89).abs() < 1e-9);
+/// assert_eq!(d.to_string(), "1.23s");
+/// ```
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Duration {
     pub(crate) nanos: u128,
