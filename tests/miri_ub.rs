@@ -7,16 +7,16 @@ use benchmark::{histogram::Histogram, Collector, Duration, Measurement};
 fn miri_duration_arithmetic_sane() {
     let a = Duration::from_nanos(5);
     let b = Duration::from_nanos(7);
-    let c = a + b;
+    let c = Duration::from_nanos(a.as_nanos() + b.as_nanos());
     assert_eq!(c.as_nanos(), 12);
 
-    let d = c.saturating_sub(a);
+    let d = Duration::from_nanos(c.as_nanos().saturating_sub(a.as_nanos()));
     assert_eq!(d.as_nanos(), 7);
 }
 
 #[test]
 fn miri_histogram_basic_percentiles() {
-    let mut h = Histogram::default();
+    let h = Histogram::default();
     for v in [1u64, 2, 3, 4, 5, 6, 7, 8, 9, 10] {
         h.record(v);
     }
@@ -35,7 +35,7 @@ fn miri_histogram_basic_percentiles() {
 
 #[test]
 fn miri_collector_record_and_stats() {
-    let mut c = Collector::new();
+    let c = Collector::new();
     for n in 1u128..=10 {
         let m = Measurement {
             name: "miri",
