@@ -1,7 +1,7 @@
 // Miri-only UB guard tests: keep fast, single-threaded, and deterministic.
-#![cfg(miri)]
+#![cfg(all(miri, feature = "std"))]
 
-use benchmark::{Collector, Duration, Histogram, Measurement};
+use benchmark::{histogram::Histogram, Collector, Duration, Measurement};
 
 #[test]
 fn miri_duration_arithmetic_sane() {

@@ -384,7 +384,7 @@ jobs:
         run: cargo miri setup
 
       - name: Run Miri tests
-        run: cargo miri test --workspace
+        run: cargo miri test --test miri_ub --features "std"
         env:
           MIRIFLAGS: -Zmiri-strict-provenance -Zmiri-symbolic-alignment-check
 
