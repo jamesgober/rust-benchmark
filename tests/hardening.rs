@@ -1,3 +1,4 @@
+#![cfg(feature = "std")]
 // Focused hardening tests for invariants, edge handling, and boundary conversions.
 
 use benchmark::{histogram::Histogram, Collector, Duration};
