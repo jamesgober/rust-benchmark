@@ -76,7 +76,7 @@
 Add this to your `Cargo.toml`:
 ```toml
 [dependencies]
-benchmark = "0.6.0"
+benchmark = "0.7.0"
 ```
 
 <br>
@@ -97,7 +97,7 @@ Add this to your `Cargo.toml`:
 ```toml
 [dependencies]
 # Disable default features for true zero-overhead
-benchmark = { version = "0.6.0", default-features = false }
+benchmark = { version = "0.7.0", default-features = false }
 ```
 
 <br>
@@ -421,7 +421,7 @@ Provides production-friendly timing and percentile statistics with negligible ov
 Installation with feature:
 ```toml
 [dependencies]
-benchmark = { version = "0.6.0", features = ["metrics"] }
+benchmark = { version = "0.7.0", features = ["metrics"] }
 ```
 
 ### Watch

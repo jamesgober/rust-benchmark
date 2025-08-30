@@ -9,6 +9,11 @@
 </p>
 
 ## [Unreleased]
+
+
+<br>
+
+## [0.7.0] - 2025-08-30
 ### Changed
 - BREAKING: Refactored feature flags to a clearer model. New flags:
   - `benchmark` (default): enables real timing and benchmarking macros; implies `std` internally.
@@ -27,6 +32,7 @@
 - For benchmarking-only users: no change needed (defaults remain timing + in-process stats).
 - For production metrics: replace `features = ["standard"]` with `features = ["metrics"]`.
 - For consumers of `Collector`/histogram only: use `features = ["collector"]`.
+
 
 
 <br>
@@ -245,7 +251,7 @@ Initial pre-dev release for backup.
 
 
 
-[Unreleased]: https://github.com/jamesgober/rust-benchmark/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/jamesgober/rust-benchmark/compare/v0.7.0...HEAD
 [0.8.0]: https://github.com/jamesgober/rust-benchmark/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/jamesgober/rust-benchmark/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/jamesgober/rust-benchmark/compare/v0.5.8...v0.6.0
