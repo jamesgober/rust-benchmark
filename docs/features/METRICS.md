@@ -50,7 +50,7 @@ The <b>metrics</b> feature provides production-grade latency metrics with near-z
 ### Manual installation:
 ```toml
 [dependencies]
-benchmark = { version = "0.5.8", features = ["metrics"] }
+benchmark = { version = "0.7.1", features = ["metrics"] }
 ```
 > ⚙️ Add directly to your `Cargo.toml`.
 
@@ -86,6 +86,20 @@ fn main() {
     println!("count={} p50={}ns p99={}ns max={}ns mean={:.1}", s.count, s.p50, s.p99, s.max, s.mean);
 }
 ```
+
+<br>
+<hr>
+<br>
+
+## Accuracy and Performance Trade-offs
+
+- **Bounds selection**: Choose `lowest` and `highest` close to your SLOs. Tighter ranges improve percentile precision and reduce memory.
+- **Input clamping**: `Watch::record()` clamps to histogram bounds. Percentile queries clamp `q` to [0.0, 1.0]. This avoids panics and yields sane results for out-of-range inputs.
+- **Precision vs memory**: The built-in histogram is fixed-size and optimized for lock-free recording; memory usage grows with the configured range. Tune bounds rather than sampling frequency.
+- **Contention**: Recording is lock-free; map access for new metric names may take a write lock once. Keep metric names stable and low-cardinality. Consider sharding hot metrics and merging snapshots offline if necessary.
+- **Snapshots**: Percentiles are computed from cloned histograms outside locks to minimize contention. Snapshot costs scale with the number of metrics.
+- **Zero durations**: Some platforms can return 0ns for extremely fast ops; this is preserved. Clamp in presentation if needed, not at collection.
+- **Tracing hooks (optional)**: Enabling the `trace` feature adds lightweight, gated logging for hot-path events to aid debugging overhead; it is zero-cost when disabled.
 
 ### Ergonomic scoped timing with `stopwatch!`
 ```rust

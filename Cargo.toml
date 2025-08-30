@@ -10,7 +10,7 @@
 #╚═══════════╩══════════════════════════════════╩════════════╝
 [package]
 name    = "benchmark"
-version = "0.7.0"
+version = "0.7.1"
 edition = "2021"
 
 # Minimum Supported Rust Version (MSRV)
@@ -62,6 +62,7 @@ default        = ["benchmark", "collector"]               # Turn-key dev: timing
 benchmark      = ["std"]                                   # Enable real timing
 collector      = ["std"]                                   # Collector + histogram
 metrics        = ["collector"]                             # Watch/Timer production metrics
+trace          = ["std"]                                   # Optional lightweight trace hooks (no-op when disabled)
 
 # Precision backends
 high-precision = ["collector"]                             # Swap to high-precision histogram backend

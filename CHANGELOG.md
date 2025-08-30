@@ -13,6 +13,22 @@
 
 <br>
 
+## [0.7.1] - 2025-08-30
+### Added
+- Optional `trace` feature providing lightweight internal trace hooks for debugging overhead.
+  - Crate-private `trace::record_event()`; zero cost when feature is off.
+  - Wired into `Watch::record()` fast/slow paths behind `cfg(feature = "trace")`.
+
+### Fixed
+- Eliminated `dead_code` warnings for `HistBackend` by gating the module behind `collector + metrics` in `src/lib.rs`.
+- Removed an incorrect public `trace!` macro to avoid unresolved symbol/API surface growth.
+
+### Maintenance
+- Macro forward-compatibility: accepted optional trailing commas across timing/benchmark macros.
+
+
+<br>
+
 ## [0.7.0] - 2025-08-30
 ### Changed
 - BREAKING: Refactored feature flags to a clearer model. New flags:
@@ -251,7 +267,8 @@ Initial pre-dev release for backup.
 
 
 
-[Unreleased]: https://github.com/jamesgober/rust-benchmark/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/jamesgober/rust-benchmark/compare/v0.7.1...HEAD
+[0.7.1]: https://github.com/jamesgober/rust-benchmark/compare/v0.7.0...v0.7.1
 [0.8.0]: https://github.com/jamesgober/rust-benchmark/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/jamesgober/rust-benchmark/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/jamesgober/rust-benchmark/compare/v0.5.8...v0.6.0

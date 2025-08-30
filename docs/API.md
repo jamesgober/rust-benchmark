@@ -76,7 +76,7 @@
 Add this to your `Cargo.toml`:
 ```toml
 [dependencies]
-benchmark = "0.7.0"
+benchmark = "0.7.1"
 ```
 
 <br>
@@ -97,7 +97,7 @@ Add this to your `Cargo.toml`:
 ```toml
 [dependencies]
 # Disable default features for true zero-overhead
-benchmark = { version = "0.7.0", default-features = false }
+benchmark = { version = "0.7.1", default-features = false }
 ```
 
 <br>
@@ -131,6 +131,23 @@ Notes:
 - Minimal build: use `default-features = false` and selectively opt in.
 
 &mdash; See [**`FEATURES DOCUMENTATION`**](./features/README.md) for more information.
+
+<br>
+
+## Quickstart
+Minimal examples to get productive fast. See full examples below for more depth.
+
+```rust
+// Benchmarking (default features)
+let (out, d) = benchmark::time!({ 2 + 2 });
+assert_eq!(out, 4);
+assert!(d.as_nanos() >= 0);
+
+// Production metrics (features = ["metrics"]) 
+let w = benchmark::Watch::new();
+benchmark::stopwatch!(w, "op", { std::thread::sleep(std::time::Duration::from_millis(1)); });
+assert!(w.snapshot()["op"].count >= 1);
+```
 
 <br>
 
@@ -421,7 +438,7 @@ Provides production-friendly timing and percentile statistics with negligible ov
 Installation with feature:
 ```toml
 [dependencies]
-benchmark = { version = "0.7.0", features = ["metrics"] }
+benchmark = { version = "0.7.1", features = ["metrics"] }
 ```
 
 ### Watch
@@ -694,11 +711,18 @@ When compiled with `default-features = false` or without `benchmark`:
 - `benchmark!` executes once and returns `(Some(result), Vec::new())`.
 - `Collector` and `Stats` are `collector`-gated; if `collector` is disabled they are not available.
 
+## Common Pitfalls
+- Ensure required features are enabled for copied snippets (`collector`, `metrics`).
+- Zero durations are valid; avoid rewriting them at collection time. Clamp only at presentation.
+- Tune histogram bounds near your SLOs for better percentile precision and lower memory.
+- Keep metric names low-cardinality and stable to reduce map contention.
+- Avoid holding your own locks across `await` inside timed regions.
+
 ### Best Practices: Handling 0ns in dashboards
-- Preserve fidelity in the data layer: zero durations are valid measurements for extremely fast operations.
-- Apply a visualization floor at presentation time only if necessary (e.g., show 1ns instead of 0ns) to avoid skewing aggregates.
-- Consider filtering 0ns when computing percentiles for SLO charts if they represent measurement granularity rather than business latency.
-- If you need to avoid zeros in histograms, clamp on export, not at collection: `max(value, 1)`. Keep raw storage exact for audits.
+- Preserve fidelity in the data layer: zero durations are valid measurements for extremely fast ops.
+- Apply a visualization floor only at presentation time if necessary.
+- Consider filtering 0ns when computing percentiles if they reflect timer granularity rather than business latency.
+- If you must avoid zeros in histograms, clamp on export (`max(value, 1)`), not at collection.
 
 <br>
 

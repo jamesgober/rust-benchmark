@@ -64,13 +64,15 @@
 #[cfg(feature = "collector")]
 mod collector;
 mod duration;
-#[cfg(feature = "collector")]
+#[cfg(all(feature = "collector", feature = "metrics"))]
 mod hist_backend;
 #[cfg(all(feature = "collector", feature = "hdr"))]
 mod hist_hdr;
 #[cfg(feature = "collector")]
 pub mod histogram;
 mod measurement;
+#[cfg(feature = "trace")]
+mod trace;
 #[cfg(feature = "metrics")]
 mod timer;
 #[cfg(feature = "metrics")]
@@ -196,7 +198,7 @@ pub fn measure_named<T, F: FnOnce() -> T>(name: &'static str, f: F) -> (T, Measu
 #[cfg(feature = "benchmark")]
 #[macro_export]
 macro_rules! time {
-    ($expr:expr) => {{
+    ($expr:expr $(,)?) => {{
         let __start = ::std::time::Instant::now();
         let __out = { $expr };
         let __dur = $crate::Duration::from_nanos(__start.elapsed().as_nanos());
@@ -208,7 +210,7 @@ macro_rules! time {
 #[cfg(not(feature = "benchmark"))]
 #[macro_export]
 macro_rules! time {
-    ($expr:expr) => {{
+    ($expr:expr $(,)?) => {{
         ($expr, $crate::Duration::ZERO)
     }};
 }
@@ -229,7 +231,7 @@ macro_rules! time {
 #[cfg(feature = "benchmark")]
 #[macro_export]
 macro_rules! time_named {
-    ($name:expr, $expr:expr) => {{
+    ($name:expr, $expr:expr $(,)?) => {{
         let __name: &'static str = $name;
         let __start = ::std::time::Instant::now();
         let __out = { $expr };
@@ -253,7 +255,7 @@ macro_rules! time_named {
 #[cfg(not(feature = "benchmark"))]
 #[macro_export]
 macro_rules! time_named {
-    ($name:expr, $expr:expr) => {{
+    ($name:expr, $expr:expr $(,)?) => {{
         let measurement = $crate::Measurement {
             name: $name,
             duration: $crate::Duration::ZERO,
@@ -273,7 +275,7 @@ macro_rules! time_named {
 #[cfg(feature = "metrics")]
 #[macro_export]
 macro_rules! stopwatch {
-    ($watch:expr, $name:expr, { $($body:tt)* }) => {{
+    ($watch:expr, $name:expr, { $($body:tt)* } $(,)?) => {{
         let __timer = $crate::Timer::new($watch.clone(), $name);
         { $($body)* }
     }};
@@ -283,7 +285,7 @@ macro_rules! stopwatch {
 #[cfg(not(all(feature = "metrics", feature = "std")))]
 #[macro_export]
 macro_rules! stopwatch {
-    ($watch:expr, $name:expr, { $($body:tt)* }) => {{
+    ($watch:expr, $name:expr, { $($body:tt)* } $(,)?) => {{
         { $($body)* }
     }};
 }
@@ -300,10 +302,10 @@ macro_rules! stopwatch {
 #[cfg(feature = "benchmark")]
 #[macro_export]
 macro_rules! benchmark_block {
-    ({ $($body:tt)* }) => {
+    ({ $($body:tt)* } $(,)?) => {
         $crate::benchmark_block!(10_000usize, { $($body)* })
     };
-    ($iters:expr, { $($body:tt)* }) => {{
+    ($iters:expr, { $($body:tt)* } $(,)?) => {{
         let __iters: usize = $iters;
         let mut __samples: ::std::vec::Vec<$crate::Duration> = ::std::vec::Vec::with_capacity(__iters);
         let mut __i = 0usize;
@@ -322,11 +324,11 @@ macro_rules! benchmark_block {
 #[cfg(not(feature = "benchmark"))]
 #[macro_export]
 macro_rules! benchmark_block {
-    ({ $($body:tt)* }) => {{
+    ({ $($body:tt)* } $(,)?) => {{
         { $($body)* }
         ::std::vec::Vec::<$crate::Duration>::new()
     }};
-    ($iters:expr, { $($body:tt)* }) => {{
+    ($iters:expr, { $($body:tt)* } $(,)?) => {{
         let _ = $iters; // keep param unused warnings away
         { $($body)* }
         ::std::vec::Vec::<$crate::Duration>::new()
@@ -347,10 +349,10 @@ macro_rules! benchmark_block {
 #[cfg(feature = "benchmark")]
 #[macro_export]
 macro_rules! benchmark {
-    ($name:expr, { $($body:tt)* }) => {
+    ($name:expr, { $($body:tt)* } $(,)?) => {
         $crate::benchmark!($name, 10_000usize, { $($body)* })
     };
-    ($name:expr, $iters:expr, { $($body:tt)* }) => {{
+    ($name:expr, $iters:expr, { $($body:tt)* } $(,)?) => {{
         let __name: &'static str = $name;
         let __iters: usize = $iters;
         let mut __measurements: ::std::vec::Vec<$crate::Measurement> = ::std::vec::Vec::with_capacity(__iters);
@@ -372,10 +374,10 @@ macro_rules! benchmark {
         }
         (__last, __measurements)
     }};
-    ($name:expr, $expr:expr) => {
+    ($name:expr, $expr:expr $(,)?) => {
         $crate::benchmark!($name, 10_000usize, { $expr })
     };
-    ($name:expr, $iters:expr, $expr:expr) => {
+    ($name:expr, $iters:expr, $expr:expr $(,)?) => {
         $crate::benchmark!($name, $iters, { $expr })
     };
 }
@@ -384,24 +386,27 @@ macro_rules! benchmark {
 #[cfg(not(feature = "benchmark"))]
 #[macro_export]
 macro_rules! benchmark {
-    ($name:expr, { $($body:tt)* }) => {{
+    ($name:expr, { $($body:tt)* } $(,)?) => {{
         let _ = $name;
-        let __out = { $($body)* };
+        let __out = { $($body:tt)* };
         (Some(__out), ::std::vec::Vec::<$crate::Measurement>::new())
     }};
-    ($name:expr, $iters:expr, { $($body:tt)* }) => {{
+    ($name:expr, $iters:expr, { $($body:tt)* } $(,)?) => {{
         let _ = ($name, $iters);
-        let __out = { $($body)* };
+        let __out = { $($body:tt)* };
         (Some(__out), ::std::vec::Vec::<$crate::Measurement>::new())
     }};
-    ($name:expr, $expr:expr) => {{
+    ($name:expr, $expr:expr $(,)?) => {{
         let _ = $name;
         let __out = $expr;
         (Some(__out), ::std::vec::Vec::<$crate::Measurement>::new())
     }};
-    ($name:expr, $iters:expr, $expr:expr) => {{
+    ($name:expr, $iters:expr, $expr:expr $(,)?) => {{
         let _ = ($name, $iters);
         let __out = $expr;
         (Some(__out), ::std::vec::Vec::<$crate::Measurement>::new())
     }};
 }
+
+// Intentionally no public trace! macro to avoid API surface area.
+// Use internal crate::trace::record_event() behind the `trace` feature.

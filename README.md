@@ -111,7 +111,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-benchmark = "0.7.0"
+benchmark = "0.7.1"
 ```
 
 <br>
@@ -123,7 +123,7 @@ benchmark = "0.7.0"
 [dependencies]
 
 # Enables Production & Development.
-benchmark = { version = "0.7.0", features = ["standard"] }
+benchmark = { version = "0.7.1", features = ["standard"] }
 ```
 
 <br>
@@ -134,7 +134,7 @@ Enable production observability using `Watch`/`Timer` or the `stopwatch!` macro.
 Cargo features:
 ```toml
 [dependencies]
-benchmark = { version = "0.7.0", features = ["std", "metrics"] }
+benchmark = { version = "0.7.1", features = ["std", "metrics"] }
 ```
 
 Record with `Timer` (auto-record on drop):
@@ -169,7 +169,7 @@ assert!(watch.snapshot()["render"].count >= 1);
 ```toml
 [dependencies]
 # Disable default features for true zero-overhead
-benchmark = { version = "0.7.0", default-features = false }
+benchmark = { version = "0.7.1", default-features = false }
 ```
 <br>
 
@@ -403,6 +403,23 @@ overhead::time_macro/time_macro_add
     <li><a href="./docs/API.md#production-metrics-feature-metrics"><b>Production Metrics</b></a> <code>Watch</code>, <code>Timer</code>, and <code>stopwatch!</code>.</li>
     <li><a href="./docs/PRINCIPLES.md"><b>Code Principles</b></a> guidelines for contribution &amp; development.</li>
 </ul>
+
+<hr>
+
+<h2>MSRV &amp; SemVer Policy</h2>
+<ul>
+  <li><b>MSRV</b>: 1.70+ (as indicated by the badge). We bump MSRV only in <b>minor</b> releases and document it in the changelog.</li>
+  <li><b>SemVer</b>:
+    <ul>
+      <li>Patch (x.y.<b>z</b>): bug fixes, internal improvements, and documentation.</li>
+      <li>Minor (x.<b>y</b>.z): new features and non-breaking API additions.</li>
+      <li>Major (<b>x</b>.y.z): breaking changes only, announced in the changelog with migration notes.</li>
+    </ul>
+  </li>
+  <li><b>Feature flags</b>: additive and stable. Disabled paths remain zero-cost.</li>
+  <li><b>No unsafe</b> in hot paths; any future "unsafe" will be justified and tested.</li>
+  <li><b>Docs.rs</b>: examples note required feature flags to avoid confusion.</li>
+  </ul>
 
 <hr>
 

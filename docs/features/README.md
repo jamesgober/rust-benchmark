@@ -76,7 +76,7 @@ Notes:
 #### Manual installation:
 ```toml
 [dependencies]
-benchmark = "0.7.0" # default features enabled (benchmark + collector)
+benchmark = "0.7.1" # default features enabled (benchmark + collector)
 ```
 > ⚙️ Add directly to your `Cargo.toml`.
 
@@ -104,7 +104,7 @@ Enables the [**`benchmark`**](./BENCHMARK.md) feature.
 #### Manual installation:
 ```toml
 [dependencies]
-benchmark = { version = "0.7.0", features = ["metrics"]}
+benchmark = { version = "0.7.1", features = ["metrics"]}
 ```
 
 #### Terminal
@@ -128,7 +128,7 @@ cargo add benchmark -F metrics
 #### Manual installation:
 ```toml
 [dependencies]
-benchmark = { version = "0.7.0", default-features = false }
+benchmark = { version = "0.7.1", default-features = false }
 ```
 > ⚙️ Add directly to your `Cargo.toml`.
 

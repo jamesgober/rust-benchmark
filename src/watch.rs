@@ -11,6 +11,8 @@ use std::sync::RwLock;
 use std::time::Instant;
 
 use crate::hist_backend::HistBackend;
+#[cfg(feature = "trace")]
+use crate::trace;
 
 // Select concrete backend by feature flags
 #[cfg(feature = "hdr")]
@@ -211,6 +213,8 @@ impl<B: HistBackend> WatchGeneric<B> {
         };
         if let Some(h) = existing {
             h.record(ns);
+            #[cfg(feature = "trace")]
+            trace::record_event(name, ns);
             return;
         }
 
@@ -219,6 +223,8 @@ impl<B: HistBackend> WatchGeneric<B> {
         let key: Arc<str> = Arc::<str>::from(name);
         let h = map.entry(key).or_insert_with(|| Arc::new(B::new())).clone();
         h.record(ns);
+        #[cfg(feature = "trace")]
+        trace::record_event(name, ns);
     }
 
     /// Record elapsed time since `start` for a metric name.
