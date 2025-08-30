@@ -26,6 +26,7 @@ fn test_basic_timing() {
 }
 
 #[test]
+#[cfg(feature = "benchmark")]
 fn test_time_macro() {
     let (result, duration) = time!(2 + 2);
     assert_eq!(result, 4);
@@ -45,6 +46,7 @@ fn test_time_macro() {
     miri,
     ignore = "thread scheduling/timing can be non-deterministic under Miri"
 )]
+#[cfg(feature = "collector")]
 fn test_collector_thread_safety() {
     use std::sync::Arc;
     use std::thread;

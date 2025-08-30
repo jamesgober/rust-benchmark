@@ -120,14 +120,15 @@ cargo add benchmark --no-default-features
 
 
 ## Features
-- `none` (optional): no features.
-- `std` (default): uses Rust standard library; disables `no_std`
-- `benchmark` (default): enables default benchmark measurement.
-- `metrics` (optional): production/live metrics (`Watch`, `Timer`, `stopwatch!`).
-- `default`: convenience feature equal to `std + benchmark`
-- `standard`: convenience feature equal to `std + benchmark + metrics`
-- `minimal`: minimal build with core timing only (*no default features*)
-- `all`: Activates all features (*includes: `std + benchmark + metrics`*)
+- `benchmark` (default): timing functions and macros.
+- `collector` (default): `Collector`, `Stats`, and built-in histogram backend.
+- `metrics` (optional): production metrics (`Watch`, `Timer`, `stopwatch!`). Implies `collector`.
+- `high-precision` (optional): enables high-precision histogram backend. Implies `collector`.
+- `hdr` (optional): HDR histogram backend via optional `hdrhistogram` dependency. Requires `high-precision`.
+
+Notes:
+- `std` is internal and implied by the above features; you do not enable it directly.
+- Minimal build: use `default-features = false` and selectively opt in.
 
 &mdash; See [**`FEATURES DOCUMENTATION`**](./features/README.md) for more information.
 
@@ -178,10 +179,10 @@ Basic statistics for a set of measurements. Available with `std` feature.
 <br>
 
 ### Histogram
-Fixed-range, high-performance histogram used by production metrics. Available with `std` feature at `benchmark::histogram`.
+Fixed-range, high-performance histogram used by production metrics. Available with `feature = "collector"` at `benchmark::histogram`.
 
 ```rust
-use benchmark::histogram::Histogram; // requires feature = "std"
+use benchmark::histogram::Histogram; // requires feature = "collector"
 
 let mut h = Histogram::new(1, 1_000_000); // bounds: 1ns..=1_000_000ns
 for _ in 0..1000 { h.record(500); }
@@ -199,7 +200,7 @@ assert!(ps[2] >= ps[0]);
 <br>
 
 ## Collector
-Thread-safe aggregation of measurements. Available with `std` feature.
+Thread-safe aggregation of measurements. Available with `feature = "collector"`.
 
 ```rust
 use benchmark::{Collector, Duration, Measurement};
@@ -288,7 +289,7 @@ let (result, dur) = time!(2 + 2);
 assert_eq!(result, 4);
 ```
 
-Async example (requires `features = ["std", "benchmark"]`):
+Async example (requires `feature = "benchmark"`):
 ```rust
 use benchmark::time;
 
@@ -312,7 +313,7 @@ assert_eq!(result, 4);
 assert_eq!(m.name, "addition");
 ```
 
-With `Collector`:
+With `Collector` (requires `features = ["benchmark", "collector"]`):
 ```rust
 use benchmark::{time_named, Collector};
 
@@ -420,14 +421,14 @@ Provides production-friendly timing and percentile statistics with negligible ov
 Installation with feature:
 ```toml
 [dependencies]
-benchmark = { version = "0.6.0", features = ["standard"] }
+benchmark = { version = "0.6.0", features = ["metrics"] }
 ```
 
 ### Watch
 Thread-safe collector of nanosecond timings using a built-in, zero-dependency histogram under the hood.
 
 ```rust
-use benchmark::Watch; // requires features = ["std", "metrics"]
+use benchmark::Watch; // requires feature = "metrics"
 
 let watch = Watch::new();
 watch.record("db.query", 42_000);
@@ -443,7 +444,7 @@ assert!(s.p99 >= s.p50);
 Records elapsed time to a `Watch` automatically when dropped.
 
 ```rust
-use benchmark::{Timer, Watch};
+use benchmark::{Timer, Watch}; // requires feature = "metrics"
 
 let watch = Watch::new();
 {
@@ -458,7 +459,7 @@ assert!(s.count >= 1);
 Ergonomic macro to time a scoped block and record to a `Watch`. Works in sync and async contexts.
 
 ```rust
-use benchmark::{stopwatch, Watch};
+use benchmark::{stopwatch, Watch}; // requires feature = "metrics"
 
 let watch = Watch::new();
 stopwatch!(watch, "io", {
@@ -589,7 +590,7 @@ assert!(w.snapshot()["job.run"].count == 1);
 Set bounds to your SLOs to reduce memory and improve precision.
 
 ```rust
-use benchmark::Watch;
+use benchmark::Watch; // requires feature = "metrics"
 
 // Builder: 100ns to 10s (fixed precision internally)
 let watch = Watch::builder()
@@ -632,7 +633,7 @@ JSON export example (using serde_json):
 // Add to Cargo.toml
 // serde = { version = "1", features = ["derive"] }
 // serde_json = "1"
-use benchmark::Watch;
+use benchmark::Watch; // requires feature = "metrics"
 use serde::Serialize;
 
 #[derive(Serialize)]
@@ -675,7 +676,7 @@ fn export_json(w: &Watch) -> String {
 - If extremely hot, consider sharding names (e.g., per-core suffix) and merging snapshots offline.
 
 ## Async Usage
-The macros inline timing using `std::time::Instant` under `features = ["std", "benchmark"]` and fully support `await` inside the macro body. They can be used with any async runtime (Tokio, async-std, etc.).
+The macros inline timing using `std::time::Instant` under `feature = "benchmark"` and fully support `await` inside the macro body. They can be used with any async runtime (Tokio, async-std, etc.).
 
 Notes:
 - When `benchmark` is off, macros return zero durations but still evaluate expressions.
@@ -691,7 +692,7 @@ When compiled with `default-features = false` or without `benchmark`:
 - `time_named!` returns `(result, Measurement::zero(name))`.
 - `benchmark_block!` executes once and returns `Vec::new()`.
 - `benchmark!` executes once and returns `(Some(result), Vec::new())`.
-- `Collector` and `Stats` are `std`-gated; if `std` is disabled they are not available.
+- `Collector` and `Stats` are `collector`-gated; if `collector` is disabled they are not available.
 
 ### Best Practices: Handling 0ns in dashboards
 - Preserve fidelity in the data layer: zero durations are valid measurements for extremely fast operations.
@@ -944,8 +945,9 @@ fn export(w: &Watch) {
 ## Doctests and feature flags
 Some examples require specific features to compile under doctest or when copy-pasted:
 
-- `Collector`, `Stats`, `time_named!`: Requires `features = ["std", "benchmark"]`.
-- `Watch`, `Timer`, `stopwatch!`: Requires `features = ["std", "metrics"]`.
+- `time!`, `measure`, `benchmark_block!`, `benchmark!`: Requires `feature = "benchmark"`.
+- `Collector`, `Stats`, `histogram`: Requires `feature = "collector"`.
+- `Watch`, `Timer`, `stopwatch!`: Requires `feature = "metrics"`.
 
 When running doctests locally with docs.rs-like configuration, consider enabling all features:
 

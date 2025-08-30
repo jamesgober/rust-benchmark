@@ -61,25 +61,29 @@
 #![allow(clippy::must_use_candidate)]
 
 // Core modules
-#[cfg(feature = "std")]
+#[cfg(feature = "collector")]
 mod collector;
 mod duration;
-#[cfg(feature = "std")]
+#[cfg(feature = "collector")]
+mod hist_backend;
+#[cfg(all(feature = "collector", feature = "hdr"))]
+mod hist_hdr;
+#[cfg(feature = "collector")]
 pub mod histogram;
 mod measurement;
-#[cfg(all(feature = "std", feature = "metrics"))]
+#[cfg(feature = "metrics")]
 mod timer;
-#[cfg(all(feature = "std", feature = "metrics"))]
+#[cfg(feature = "metrics")]
 mod watch;
 
 // Public exports
-#[cfg(feature = "std")]
+#[cfg(feature = "collector")]
 pub use collector::{Collector, Stats};
 pub use duration::Duration;
 pub use measurement::Measurement;
-#[cfg(all(feature = "std", feature = "metrics"))]
+#[cfg(feature = "metrics")]
 pub use timer::Timer;
-#[cfg(all(feature = "std", feature = "metrics"))]
+#[cfg(feature = "metrics")]
 pub use watch::{Watch, WatchBuilder, WatchStats};
 
 // Re-export macros at crate root
@@ -87,7 +91,7 @@ pub use watch::{Watch, WatchBuilder, WatchStats};
 pub use crate as benchmark;
 
 // Core timing functionality
-#[cfg(all(feature = "std", feature = "benchmark"))]
+#[cfg(feature = "benchmark")]
 use std::time::Instant;
 
 /// Measures the execution time of a function.
@@ -108,7 +112,7 @@ use std::time::Instant;
 /// # #[cfg(feature = "benchmark")]
 /// # let _ = duration.as_nanos();
 /// ```
-#[cfg(all(feature = "benchmark", feature = "std"))]
+#[cfg(feature = "benchmark")]
 #[inline]
 pub fn measure<T, F: FnOnce() -> T>(f: F) -> (T, Duration) {
     let start = Instant::now();
@@ -189,7 +193,7 @@ pub fn measure_named<T, F: FnOnce() -> T>(name: &'static str, f: F) -> (T, Measu
 /// let (result, duration) = time!(2 + 2);
 /// assert_eq!(result, 4);
 /// ```
-#[cfg(all(feature = "benchmark", feature = "std"))]
+#[cfg(feature = "benchmark")]
 #[macro_export]
 macro_rules! time {
     ($expr:expr) => {{
@@ -222,7 +226,7 @@ macro_rules! time {
 /// assert_eq!(result, 4);
 /// assert_eq!(measurement.name, "addition");
 /// ```
-#[cfg(all(feature = "benchmark", feature = "std"))]
+#[cfg(feature = "benchmark")]
 #[macro_export]
 macro_rules! time_named {
     ($name:expr, $expr:expr) => {{
@@ -266,7 +270,7 @@ macro_rules! time_named {
 /// duration when dropped at the end of the scope. Body may contain `await`.
 ///
 /// Disabled path evaluates body with zero overhead.
-#[cfg(all(feature = "metrics", feature = "std"))]
+#[cfg(feature = "metrics")]
 #[macro_export]
 macro_rules! stopwatch {
     ($watch:expr, $name:expr, { $($body:tt)* }) => {{
@@ -293,7 +297,7 @@ macro_rules! stopwatch {
 /// The block may contain `await` and arbitrary statements. When the `benchmark`
 /// feature is disabled, the block executes once (to preserve side effects) and
 /// the macro returns an empty `Vec` with zero timing overhead.
-#[cfg(all(feature = "benchmark", feature = "std"))]
+#[cfg(feature = "benchmark")]
 #[macro_export]
 macro_rules! benchmark_block {
     ({ $($body:tt)* }) => {
@@ -340,7 +344,7 @@ macro_rules! benchmark_block {
 /// The expression/body may contain `await`. When the `benchmark` feature is
 /// disabled, the expression executes once and the macro returns `(Some(output), vec![])`
 /// with zero timing overhead.
-#[cfg(all(feature = "benchmark", feature = "std"))]
+#[cfg(feature = "benchmark")]
 #[macro_export]
 macro_rules! benchmark {
     ($name:expr, { $($body:tt)* }) => {

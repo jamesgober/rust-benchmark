@@ -1,6 +1,6 @@
 //! Property-based tests for Histogram invariants.
 
-#![cfg(feature = "std")]
+#![cfg(feature = "collector")]
 
 use benchmark::histogram::Histogram;
 use proptest::prelude::*;

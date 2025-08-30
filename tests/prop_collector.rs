@@ -1,6 +1,6 @@
 //! Property-based tests for Collector invariants.
 
-#![cfg(feature = "std")]
+#![cfg(feature = "collector")]
 
 use benchmark::{Collector, Duration, Measurement};
 use proptest::prelude::*;

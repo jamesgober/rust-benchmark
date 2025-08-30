@@ -1,5 +1,6 @@
 #![cfg(all(feature = "std", feature = "metrics"))]
 
+use core::marker::PhantomData;
 #[cfg(feature = "parking-lot-locks")]
 use parking_lot::RwLock;
 use std::collections::HashMap;
@@ -9,18 +10,24 @@ use std::sync::Arc;
 use std::sync::RwLock;
 use std::time::Instant;
 
-use crate::histogram::Histogram;
+use crate::hist_backend::HistBackend;
+
+// Select concrete backend by feature flags
+#[cfg(feature = "hdr")]
+type Backend = crate::hist_hdr::Histogram;
+#[cfg(not(feature = "hdr"))]
+type Backend = crate::histogram::FastHistogram;
 
 // Normalize guard types across lock backends at module scope
 #[cfg(feature = "parking-lot-locks")]
-type ReadGuard<'a> = parking_lot::RwLockReadGuard<'a, HashMap<Arc<str>, Arc<Histogram>>>;
+type ReadGuard<'a, B> = parking_lot::RwLockReadGuard<'a, HashMap<Arc<str>, Arc<B>>>;
 #[cfg(not(feature = "parking-lot-locks"))]
-type ReadGuard<'a> = std::sync::RwLockReadGuard<'a, HashMap<Arc<str>, Arc<Histogram>>>;
+type ReadGuard<'a, B> = std::sync::RwLockReadGuard<'a, HashMap<Arc<str>, Arc<B>>>;
 
 #[cfg(feature = "parking-lot-locks")]
-type WriteGuard<'a> = parking_lot::RwLockWriteGuard<'a, HashMap<Arc<str>, Arc<Histogram>>>;
+type WriteGuard<'a, B> = parking_lot::RwLockWriteGuard<'a, HashMap<Arc<str>, Arc<B>>>;
 #[cfg(not(feature = "parking-lot-locks"))]
-type WriteGuard<'a> = std::sync::RwLockWriteGuard<'a, HashMap<Arc<str>, Arc<Histogram>>>;
+type WriteGuard<'a, B> = std::sync::RwLockWriteGuard<'a, HashMap<Arc<str>, Arc<B>>>;
 
 /// Default lowest discernible value (1ns)
 const DEFAULT_LOWEST: u64 = 1;
@@ -44,22 +51,33 @@ const DEFAULT_HIGHEST: u64 = 3_600_000_000_000;
 /// assert_eq!(s.count, 1);
 /// assert_eq!(s.min, 1_500);
 /// ```
-#[derive(Clone)]
-pub struct Watch {
-    inner: Arc<Inner>,
+pub struct WatchGeneric<B: HistBackend> {
+    inner: Arc<Inner<B>>,
 }
 
-impl Default for Watch {
+/// Feature-selected concrete `Watch` type using the active histogram backend.
+pub type Watch = WatchGeneric<Backend>;
+
+impl<B: HistBackend> Default for WatchGeneric<B> {
     #[inline]
     fn default() -> Self {
         Self::new()
     }
 }
 
-struct Inner {
+impl<B: HistBackend> Clone for WatchGeneric<B> {
+    #[inline]
+    fn clone(&self) -> Self {
+        Self {
+            inner: Arc::clone(&self.inner),
+        }
+    }
+}
+
+struct Inner<B: HistBackend> {
     // Store Arc<Histogram> to allow lock-free record on hot path
     // Keyed by Arc<str> to avoid repeated String allocations and enable cheap sharing.
-    hist: RwLock<HashMap<Arc<str>, Arc<Histogram>>>,
+    hist: RwLock<HashMap<Arc<str>, Arc<B>>>,
     lowest: u64,
     highest: u64,
 }
@@ -87,35 +105,35 @@ pub struct WatchStats {
     pub mean: f64,
 }
 
-impl fmt::Debug for Watch {
+impl<B: HistBackend> fmt::Debug for WatchGeneric<B> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let len = self.read_hist().len();
         f.debug_struct("Watch").field("metrics_len", &len).finish()
     }
 }
 
-impl Watch {
+impl<B: HistBackend> WatchGeneric<B> {
     #[cfg(feature = "parking-lot-locks")]
     #[inline]
-    fn read_hist(&self) -> ReadGuard<'_> {
+    fn read_hist(&self) -> ReadGuard<'_, B> {
         self.inner.hist.read()
     }
 
     #[cfg(not(feature = "parking-lot-locks"))]
     #[inline]
-    fn read_hist(&self) -> ReadGuard<'_> {
+    fn read_hist(&self) -> ReadGuard<'_, B> {
         self.inner.hist.read().expect("watch read lock poisoned")
     }
 
     #[cfg(feature = "parking-lot-locks")]
     #[inline]
-    fn write_hist(&self) -> WriteGuard<'_> {
+    fn write_hist(&self) -> WriteGuard<'_, B> {
         self.inner.hist.write()
     }
 
     #[cfg(not(feature = "parking-lot-locks"))]
     #[inline]
-    fn write_hist(&self) -> WriteGuard<'_> {
+    fn write_hist(&self) -> WriteGuard<'_, B> {
         self.inner.hist.write().expect("watch write lock poisoned")
     }
 
@@ -141,8 +159,8 @@ impl Watch {
     /// let _ = w; // built successfully
     /// ```
     #[inline]
-    pub fn builder() -> WatchBuilder {
-        WatchBuilder::new()
+    pub fn builder() -> WatchBuilderGeneric<B> {
+        WatchBuilderGeneric::new()
     }
 
     /// Create a Watch with custom histogram bounds.
@@ -187,7 +205,7 @@ impl Watch {
         let ns = duration_ns.clamp(self.inner.lowest, self.inner.highest);
 
         // Fast path: try obtain Arc without write locking
-        let existing: Option<Arc<Histogram>> = {
+        let existing: Option<Arc<B>> = {
             let map = self.read_hist();
             map.get(name).cloned()
         };
@@ -199,10 +217,7 @@ impl Watch {
         // Slow path: create the histogram under write lock if absent
         let mut map = self.write_hist();
         let key: Arc<str> = Arc::<str>::from(name);
-        let h = map
-            .entry(key)
-            .or_insert_with(|| Arc::new(Histogram::new()))
-            .clone();
+        let h = map.entry(key).or_insert_with(|| Arc::new(B::new())).clone();
         h.record(ns);
     }
 
@@ -249,7 +264,7 @@ impl Watch {
     /// assert!(m.min <= m.p50 && m.p50 <= m.max);
     /// ```
     pub fn snapshot(&self) -> HashMap<String, WatchStats> {
-        let items: Vec<(Arc<str>, Arc<Histogram>)> = {
+        let items: Vec<(Arc<str>, Arc<B>)> = {
             let map = self.read_hist();
             map.iter()
                 .map(|(k, v)| (Arc::clone(k), Arc::clone(v)))
@@ -345,19 +360,23 @@ impl Watch {
 
 /// Builder for configuring and constructing a `Watch`.
 #[derive(Debug, Clone, Copy)]
-pub struct WatchBuilder {
+pub struct WatchBuilderGeneric<B: HistBackend> {
     lowest: u64,
     highest: u64,
+    _marker: PhantomData<B>,
 }
 
-impl Default for WatchBuilder {
+/// Feature-selected concrete `WatchBuilder` using the active histogram backend.
+pub type WatchBuilder = WatchBuilderGeneric<Backend>;
+
+impl<B: HistBackend> Default for WatchBuilderGeneric<B> {
     #[inline]
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl WatchBuilder {
+impl<B: HistBackend> WatchBuilderGeneric<B> {
     /// Start a builder with default bounds: 1ns..~1h, 3 significant figures.
     ///
     /// # Examples
@@ -370,6 +389,7 @@ impl WatchBuilder {
         Self {
             lowest: DEFAULT_LOWEST,
             highest: DEFAULT_HIGHEST,
+            _marker: PhantomData,
         }
     }
 
@@ -391,9 +411,9 @@ impl WatchBuilder {
 
     /// Build the `Watch` with the configured settings.
     #[inline]
-    pub fn build(self) -> Watch {
+    pub fn build(self) -> WatchGeneric<B> {
         let lowest = self.lowest.max(1);
         let highest = self.highest.max(lowest + 1);
-        Watch::with_bounds(lowest, highest)
+        WatchGeneric::<B>::with_bounds(lowest, highest)
     }
 }

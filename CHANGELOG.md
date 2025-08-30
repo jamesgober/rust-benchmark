@@ -9,10 +9,24 @@
 </p>
 
 ## [Unreleased]
+### Changed
+- BREAKING: Refactored feature flags to a clearer model. New flags:
+  - `benchmark` (default): enables real timing and benchmarking macros; implies `std` internally.
+  - `collector` (default): enables `Collector`, `Stats`, and built-in histogram; implies `std` internally.
+  - `metrics`: enables production metrics (`Watch`, `Timer`, `stopwatch!`); implies `collector`.
+  - `high-precision`: enables high-precision histogram backend; implies `collector`.
+  - `hdr`: enables external HDR histogram backend (optional dep `hdrhistogram`); requires `high-precision`.
+  - Note: `std` is now an internal implementation detail implied by higher-level features.
+- Removed legacy/alias features: `minimal`, `standard`, `all`, and public `std` flag.
 
+### Added
+- Optional dependency `hdrhistogram = "7"` behind the `hdr` feature.
+- CI updated to test new feature matrix, including combinations like `metrics high-precision` and `metrics hdr`.
 
-
-
+### Migration
+- For benchmarking-only users: no change needed (defaults remain timing + in-process stats).
+- For production metrics: replace `features = ["standard"]` with `features = ["metrics"]`.
+- For consumers of `Collector`/histogram only: use `features = ["collector"]`.
 
 
 <br>

@@ -1,4 +1,4 @@
-#![cfg(feature = "std")]
+#![cfg(feature = "collector")]
 // Focused hardening tests for invariants, edge handling, and boundary conversions.
 
 use benchmark::{histogram::Histogram, Collector, Duration};
@@ -70,10 +70,25 @@ fn histogram_handles_large_values_and_duplicates() {
     }
     h.record(u64::MAX);
     assert_eq!(h.count(), 11);
-    assert_eq!(h.min().unwrap(), large);
-    assert_eq!(h.max().unwrap(), u64::MAX);
-    let p99 = h.percentile(0.99).unwrap();
-    assert!(p99 >= large);
+    #[cfg(not(feature = "hdr"))]
+    {
+        assert_eq!(h.min().unwrap(), large);
+        assert_eq!(h.max().unwrap(), u64::MAX);
+        let p99 = h.percentile(0.99).unwrap();
+        assert!(p99 >= large);
+    }
+    #[cfg(feature = "hdr")]
+    {
+        let min = h.min().unwrap();
+        let max = h.max().unwrap();
+        // HDR clamps to ~1h and may quantize buckets; ensure values are in a reasonable bound
+        assert!(min >= 1);
+        assert!(max >= min);
+        // Max should be at or near the ~1h cap with 3 sigfig quantization
+        assert!((3_500_000_000_000u64..=3_800_000_000_000u64).contains(&max));
+        let p99 = h.percentile(0.99).unwrap();
+        assert!(p99 >= min);
+    }
 }
 
 #[test]
@@ -98,5 +113,13 @@ fn watch_records_extreme_values() {
     let s = &w.snapshot()["x"];
     // Watch clamps inputs to histogram bounds: [1ns, ~1h]
     assert_eq!(s.min, 1);
-    assert_eq!(s.max, 3_600_000_000_000);
+    #[cfg(not(feature = "hdr"))]
+    {
+        assert_eq!(s.max, 3_600_000_000_000);
+    }
+    #[cfg(feature = "hdr")]
+    {
+        // HDR may report bucket upper bound slightly above the configured max due to quantization
+        assert!((3_600_000_000_000u64..=3_800_000_000_000u64).contains(&s.max));
+    }
 }

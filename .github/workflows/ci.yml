@@ -73,10 +73,14 @@ jobs:
       fail-fast: false
       matrix:
         features:
-          - ""               # no default features (no_std build)
-          - "minimal"        # minimal feature
-          - "std"            # std only
-          - "all"           # std + benchmark
+          - ""                               # no default features (no_std build)
+          - "benchmark"                      # timing only
+          - "collector"                      # collector + histogram
+          - "metrics"                        # production metrics
+          - "high-precision"                 # high-precision backend (collector implied)
+          - "hdr"                             # external HDR backend (high-precision implied)
+          - "metrics high-precision"         # metrics + high-precision
+          - "metrics hdr"                    # metrics + hdr backend
 
     steps:
       - name: Checkout code

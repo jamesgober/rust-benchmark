@@ -54,22 +54,25 @@ authors = [
 #╚═══════════════════════════════════════════════════════════╝
 [features]
 
-# Standard Features
-std         = [] # Use the Rust standard library (disables no_std).
-benchmark   = [] # Benchmarking enabled (can be disabled for true zero-overhead).
-metrics     = ["std"] # Use production metrics (Watch/Timer) and Rust standard library
-# Gate perf-sensitive unit tests/benches so they can be opted into explicitly
-perf-tests  = []
-long-tests  = []
+# Internal std switch (activated by higher-level features)
+std = []
 
-# Use parking_lot for faster RwLock in hot paths
+# Core features
+default        = ["benchmark", "collector"]               # Turn-key dev: timing + in-process stats
+benchmark      = ["std"]                                   # Enable real timing
+collector      = ["std"]                                   # Collector + histogram
+metrics        = ["collector"]                             # Watch/Timer production metrics
+
+# Precision backends
+high-precision = ["collector"]                             # Swap to high-precision histogram backend
+hdr            = ["high-precision", "dep:hdrhistogram"]   # Use external HDR histogram backend
+
+# Perf/long tests are opt-in
+perf-tests = []
+long-tests = []
+
+# Faster locks in hot paths (optional)
 parking-lot-locks = ["dep:parking_lot"]
-
-# Feature Combinations
-minimal  = [] # Minimal build with core timing only (no default features).
-default  = ["std", "benchmark"] # Default features (includes std and benchmark).
-standard = ["metrics", "benchmark"] # Default features (includes std and benchmark).
-all      = ["std", "benchmark", "metrics"] # Complete build with all features enabled.
 
 
 
@@ -106,6 +109,9 @@ harness = false
 # Optional: faster synchronization primitives
 parking_lot = { version = "0.12", optional = true }
 
+# Optional: external HDR histogram backend
+hdrhistogram = { version = "7", optional = true }
+
 
 #╔═══════════════════════════════════════════════════════════╗
 #║ 🧩 DEV DEPENDENCIES
@@ -115,3 +121,41 @@ tokio     = { version = "1", features = ["macros", "rt-multi-thread", "time"] }
 trybuild  = "1.0"
 criterion = "0.5"
 proptest  = "1"
+
+#╔═══════════════════════════════════════════════════════════╗
+#║ 🧪 EXAMPLES (with required-features)
+#╚═══════════════════════════════════════════════════════════╝
+[[example]]
+name = "zero_overhead"
+path = "examples/zero_overhead.rs"
+# zero_overhead should compile in no-default-features mode
+
+[[example]]
+name = "basic_cli"
+path = "examples/basic_cli.rs"
+required-features = ["benchmark"]
+
+[[example]]
+name = "overhead_compare"
+path = "examples/overhead_compare.rs"
+required-features = ["benchmark"]
+
+[[example]]
+name = "async_task"
+path = "examples/async_task.rs"
+required-features = ["benchmark"]
+
+[[example]]
+name = "multi_threaded_collection"
+path = "examples/multi_threaded_collection.rs"
+required-features = ["collector"]
+
+[[example]]
+name = "prometheus_textfile"
+path = "examples/prometheus_textfile.rs"
+required-features = ["metrics"]
+
+[[example]]
+name = "web_server"
+path = "examples/web_server.rs"
+required-features = ["metrics"]
