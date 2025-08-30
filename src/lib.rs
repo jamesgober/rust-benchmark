@@ -71,10 +71,10 @@ mod hist_hdr;
 #[cfg(feature = "collector")]
 pub mod histogram;
 mod measurement;
-#[cfg(feature = "trace")]
-mod trace;
 #[cfg(feature = "metrics")]
 mod timer;
+#[cfg(feature = "trace")]
+mod trace;
 #[cfg(feature = "metrics")]
 mod watch;
 
@@ -388,12 +388,12 @@ macro_rules! benchmark {
 macro_rules! benchmark {
     ($name:expr, { $($body:tt)* } $(,)?) => {{
         let _ = $name;
-        let __out = { $($body:tt)* };
+        let __out = { $($body)* };
         (Some(__out), ::std::vec::Vec::<$crate::Measurement>::new())
     }};
     ($name:expr, $iters:expr, { $($body:tt)* } $(,)?) => {{
         let _ = ($name, $iters);
-        let __out = { $($body:tt)* };
+        let __out = { $($body)* };
         (Some(__out), ::std::vec::Vec::<$crate::Measurement>::new())
     }};
     ($name:expr, $expr:expr $(,)?) => {{
