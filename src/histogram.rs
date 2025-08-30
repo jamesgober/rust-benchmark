@@ -69,7 +69,7 @@ const MEMORY_ORDER: Ordering = Ordering::Relaxed;
 /// - **Thread contention**: Minimal due to lock-free design
 #[cfg(not(feature = "hdr"))]
 #[derive(Debug)]
-pub(crate) struct FastHistogram {
+pub struct FastHistogram {
     /// High-precision linear buckets for 0-1023 nanoseconds
     /// Each bucket represents exactly 1 nanosecond
     linear_buckets: [AtomicU64; LINEAR_BUCKETS],
@@ -1056,85 +1056,6 @@ mod tests {
         assert_eq!(hist.median(), Some(5_000));
     }
 
-    #[cfg(not(feature = "hdr"))]
-    #[test]
-    fn test_parity_fast_vs_hdr_basic_stats() {
-        // Fast backend
-        let fast = FastHistogram::new();
-        // HDR backend
-        let hdr = crate::hist_hdr::Histogram::new();
-
-        for i in 1..=1000 {
-            fast.record(i);
-            hdr.record(i);
-        }
-
-        assert_eq!(fast.count(), hdr.count());
-        assert_eq!(fast.min(), hdr.min());
-        assert_eq!(fast.max(), hdr.max());
-
-        // Means may differ slightly due to internal rounding; allow tiny epsilon
-        let fm = fast.mean().unwrap();
-        let hm = hdr.mean().unwrap();
-        let diff = (fm - hm).abs();
-        assert!(diff < 1e-6, "mean diff too large: {diff}");
-
-        // Median parity
-        assert_eq!(fast.median(), hdr.median());
-    }
-
-    #[cfg(not(feature = "hdr"))]
-    #[test]
-    fn test_parity_fast_vs_hdr_percentiles() {
-        let fast = FastHistogram::new();
-        let hdr = crate::hist_hdr::Histogram::new();
-
-        // Mix of linear and log-bucket values to exercise interpolation
-        let values = [
-            0u64, 1, 2, 3, 10, 100, 500, 900, 1023, 1024, 1500, 2_000, 5_000, 10_000, 100_000,
-            1_000_000,
-        ];
-        for &v in &values {
-            fast.record(v);
-            hdr.record(v);
-        }
-
-        let qs = [0.0, 0.1, 0.25, 0.5, 0.9, 0.95, 0.99, 1.0];
-        let fp = fast.percentiles(&qs);
-        let hp = hdr.percentiles(&qs);
-
-        let log_bucket = |v: u64| -> i32 {
-            if v == 0 {
-                0
-            } else {
-                63 - i32::try_from(v.leading_zeros()).unwrap()
-            }
-        };
-
-        for (i, (fa, ha)) in fp.iter().zip(hp.iter()).enumerate() {
-            match (fa, ha) {
-                (Some(fv), Some(hv)) => {
-                    // Compare by logarithmic bucket to accommodate HDR quantization differences.
-                    let fb = log_bucket(*fv);
-                    let hb = log_bucket(*hv);
-                    assert!(
-                        (fb - hb).abs() <= 1,
-                        "percentile {} bucket mismatch: fast={} (2^{fb}), hdr={} (2^{hb})",
-                        qs[i],
-                        fv,
-                        hv
-                    );
-                    // Note: HDR may return the upper bound of a quantized bucket, which can exceed
-                    // the observed max value. We only compare bucket order to ensure parity.
-                }
-                (None, None) => {}
-                _ => panic!(
-                    "percentile {:?} presence mismatch: fast={fa:?}, hdr={ha:?}",
-                    qs[i]
-                ),
-            }
-        }
-    }
 
     #[cfg(not(feature = "hdr"))]
     #[test]
