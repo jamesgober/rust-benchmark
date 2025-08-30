@@ -360,7 +360,7 @@ jobs:
           
           # Run actual benchmarks if they exist
           if [ -d "benches" ]; then
-            cargo bench --features "all" -- --output-format bencher | tee output.txt
+            cargo bench --all-features -- --output-format bencher | tee output.txt
           else
             echo "No benchmarks found, skipping..."
           fi
@@ -426,8 +426,8 @@ jobs:
       - name: Check MSRV compatibility (lib only, no default features)
         run: cargo check --lib --no-default-features
 
-      - name: Check MSRV compatibility (lib only, minimal features)
-        run: cargo check --lib --no-default-features --features "minimal"
+      - name: Check MSRV compatibility (lib with metrics)
+        run: cargo check --lib --no-default-features --features "metrics"
 
-      - name: Check MSRV compatibility (standard features)
-        run: cargo check --lib --features "all"
+      - name: Check MSRV compatibility (HDR backend)
+        run: cargo check --lib --no-default-features --features "hdr"

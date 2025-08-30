@@ -34,60 +34,55 @@
 <br>
 
 ## Features
-- **`std`** (*default*): Uses Rust standard library; disables `no_std`
-- [**`benchmark`**](./BENCHMARK.md) (*default*): Enables default benchmark tools.
-- [**`metrics`**](./METRICS.md) (*optional*): Enables production metrics (`Watch`, `Timer`, `stopwatch!`).
-- [**`default`**](#default-feature): Convenience feature equal to `std + benchmark`
-- [**`standard`**](#standard-feature): Convenience feature equal to `std + benchmark + metrics`
-- **`minimal`**: Minimal build with core timing only (*no default features*)
-- **`all`**: Enables all features (*includes: `std + benchmark + metrics`*)
+- **`benchmark`** (default): Real timing, macros, and development benchmarking.
+- **`collector`** (default): Collector, `Stats`, and built-in histogram backend.
+- **`metrics`** (optional): Production metrics (`Watch`, `Timer`, `stopwatch!`).
+- **`high-precision`** (optional): Selects the high-precision histogram backend.
+- **`hdr`** (optional): External HDR histogram backend; requires `high-precision`.
+- **`parking-lot-locks`** (optional): Faster synchronization for hot paths.
 
-### Extras
-- [**`disable-default`**](#disable-default-feature): Disables default features (*`std` + `benchmark`*)
+Notes:
+- `metrics` implies `collector`.
+- `hdr` implies `high-precision` and enables the optional `hdrhistogram` dependency.
+- `std` is an internal implementation detail implied by higher-level features.
 
 <hr>
 <br>
 
 ## Feature Matrix
 
-| Capability / API                  | `std` | `benchmark` | `metrics` | `default` | `standard` | `all` |
-|-----------------------------------|:-----:|:-----------:|:---------:|:---------:|:----------:|:-----:|
-| Core macros: `time!`, `time_named!` |  ✓   |      ✓      |           |     ✓     |     ✓      |   ✓   |
-| Statistical: `benchmark_block!`, `benchmark!` |  ✓ | ✓ |           | ✓ | ✓ | ✓ |
-| Types: `Duration`, `Measurement`, `Stats` | ✓ | ✓ |           | ✓ | ✓ | ✓ |
-| Production metrics: `Watch`, `Timer`, `stopwatch!` | ✓ |           |    ✓    |     –     |     ✓      |   ✓   |
-| Collectors (`Collector`)          |  ✓   |      ✓      |           |     ✓     |     ✓      |   ✓   |
-| No-std core (disabled path)       |  –    |      –      |    –      |     –     |     –      |   –   |
+| Capability / API                                | `benchmark` | `collector` | `metrics` | `high-precision` | `hdr` |
+|-------------------------------------------------|:-----------:|:-----------:|:---------:|:----------------:|:-----:|
+| Core macros: `time!`, `time_named!`             |      ✓      |             |           |                  |       |
+| Statistical: `benchmark_block!`, `benchmark!`   |      ✓      |             |           |                  |       |
+| Types: `Duration`, `Measurement`, `Stats`       |      ✓      |      ✓      |           |                  |       |
+| Collector + built-in histogram                  |             |      ✓      |           |         ✓        |       |
+| Production metrics: `Watch`, `Timer`, `stopwatch!` |           |             |    ✓     |         ✓        |   ✓   |
+| External HDR histogram backend                   |             |             |           |                  |   ✓   |
 
 Notes:
-- `default` = `std + benchmark`
-- `standard` = `std + benchmark + metrics`
-- `minimal` implies `--no-default-features` with no extras
+- `high-precision` selects the high-precision histogram backend used by collectors/metrics.
+- `hdr` switches the histogram backend to `hdrhistogram`.
 
 
 <!-- DEFAULT FEATURE
 ############################################# -->
-<h2 id="default-feature">Default Feature</h2>
+<h2 id="default-feature">Default Features</h2>
 <p>
-    The default build enables <code>std</code> and <code>benchmark</code>. This provides core timing, macros, and the development benchmarking toolkit with zero configuration required.
-    Disable default features for a true zero-overhead core.
-    
+    The default build enables <code>benchmark</code> and <code>collector</code> for turn-key development: real timing, statistics, and a built-in histogram. Disable default features for a true zero-overhead core.
 </p>
 
 ### Installation
 #### Manual installation:
 ```toml
 [dependencies]
-benchmark = "0.5.8" # default features enabled.
-
-# Default features are enabled automatically; no extra configuration needed.
+benchmark = "0.6.0" # default features enabled (benchmark + collector)
 ```
 > ⚙️ Add directly to your `Cargo.toml`.
 
 
 ### Installation via terminal:
 ```bash
-# default features enabled.
 cargo add benchmark
 ```
 > ⚙️ Using the `cargo add` command.
@@ -100,32 +95,22 @@ Enables the [**`benchmark`**](./BENCHMARK.md) feature.
 <hr>
 <br>
 
-<!-- STANDARD FEATURE
-############################################# -->
-<h2 id="standard-feature">Standard Feature</h2>
+<h2 id="metrics-feature">Metrics Feature</h2>
 <p>
-    Convenience feature to enable the full development experience: <code>benchmark</code> (development) + <code>metrics</code> (production observability).
-    The <code>metrics</code> feature implies <code>std</code> and uses an internal zero-dependency histogram.
+    Enable production metrics with <code>metrics</code>. This brings in <code>Watch</code>, <code>Timer</code>, and the <code>stopwatch!</code> macro, backed by the histogram backend.
 </p>
 
 ### Installation
 #### Manual installation:
 ```toml
 [dependencies]
-benchmark = { version = "0.5.8", features = ["standard"]}
+benchmark = { version = "0.6.0", features = ["metrics"]}
 ```
-> ⚙️ Add directly to your `Cargo.toml`.
 
-
-### Installation via terminal:
+#### Terminal
 ```bash
-cargo add benchmark -F standard
+cargo add benchmark -F metrics
 ```
-> ⚙️ Using the `cargo add` command.
-
-<br>
-
-Enables both the [**`benchmark`**](./BENCHMARK.md) and the [**`metrics`**](./METRICS.md) features.
 
 
 <hr>
@@ -133,7 +118,7 @@ Enables both the [**`benchmark`**](./BENCHMARK.md) and the [**`metrics`**](./MET
 
 <!-- DISABLE DEFAULT FEATURE
 ############################################# -->
-<h2 id="disable-default-feature">Disable Default Feature</h2>
+<h2 id="disable-default-feature">Disable Default Features</h2>
 <p>
     Build the true zero-overhead core by disabling default features. Timing APIs compile to no-ops and add zero bytes/time.
     Re-enable selectively (e.g., <code>-F benchmark</code>, <code>-F metrics</code>) when needed.
@@ -143,21 +128,20 @@ Enables both the [**`benchmark`**](./BENCHMARK.md) and the [**`metrics`**](./MET
 #### Manual installation:
 ```toml
 [dependencies]
-benchmark = { version = "0.5.8", default-features = false }
+benchmark = { version = "0.6.0", default-features = false }
 ```
 > ⚙️ Add directly to your `Cargo.toml`.
 
 
 ### Installation via terminal:
 ```bash
-# disable default features (minimal core)
 cargo add benchmark --no-default-features
 ```
 > ⚙️ Using the `cargo add` command.
 
 <br>
 
-Disables <code>default</code> (which includes <code>benchmark</code>). Combine with <code>-F benchmark</code> or <code>-F metrics</code> to opt back in.
+Disables default features (<code>benchmark</code> + <code>collector</code>). Combine with <code>-F benchmark</code> and/or <code>-F metrics</code> to opt back in.
 
 
 <hr>

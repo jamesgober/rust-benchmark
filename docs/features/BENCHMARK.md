@@ -55,10 +55,10 @@ The <b>benchmark</b> feature provides a lightweight, statistically-sound toolkit
 [dependencies]
 
 # Benchmark is enabled by default.
-benchmark = "0.5.8"
+benchmark = "0.6.0"
 
-# or enable benchmark directly. 
-benchmark = { version = "0.5.8", features = ["benchmark", "std"]}
+# or enable benchmark explicitly.
+benchmark = { version = "0.6.0", features = ["benchmark"]}
 ```
 > ⚙️ Add directly to your `Cargo.toml`.
 
@@ -69,8 +69,8 @@ benchmark = { version = "0.5.8", features = ["benchmark", "std"]}
 # Benchmark is enabled by default.
 cargo add benchmark
 
-# or enable benchmark directly. 
-cargo add benchmark -F benchmark -F std
+# or enable benchmark explicitly.
+cargo add benchmark -F benchmark
 ```
 > ⚙️ Using the `cargo add` command.
 
