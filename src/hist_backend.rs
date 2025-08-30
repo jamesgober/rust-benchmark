@@ -36,6 +36,7 @@ pub trait HistBackend {
 }
 
 // Implement for the default fast backend
+#[cfg(not(feature = "hdr"))]
 impl HistBackend for crate::histogram::FastHistogram {
     #[inline]
     fn new() -> Self {

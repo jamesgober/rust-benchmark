@@ -30,16 +30,20 @@
 //! println!("Mean: {:?}", histogram.mean());
 //! ```
 
+#[cfg(not(feature = "hdr"))]
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Duration;
 
 /// Maximum number of linear buckets for high-precision measurements (0-1023ns)
+#[cfg(not(feature = "hdr"))]
 const LINEAR_BUCKETS: usize = 1024;
 
 /// Maximum number of logarithmic buckets (covers up to 2^63 nanoseconds)
+#[cfg(not(feature = "hdr"))]
 const LOG_BUCKETS: usize = 64;
 
 /// Memory ordering for atomic operations - optimized for performance while ensuring correctness
+#[cfg(not(feature = "hdr"))]
 const MEMORY_ORDER: Ordering = Ordering::Relaxed;
 
 /// A high-performance, thread-safe histogram optimized for timing measurements.
@@ -63,6 +67,7 @@ const MEMORY_ORDER: Ordering = Ordering::Relaxed;
 /// - **Percentile**: O(1) - constant time lookup with interpolation
 /// - **Statistics**: O(1) - direct atomic reads
 /// - **Thread contention**: Minimal due to lock-free design
+#[cfg(not(feature = "hdr"))]
 #[derive(Debug)]
 pub(crate) struct FastHistogram {
     /// High-precision linear buckets for 0-1023 nanoseconds
@@ -86,6 +91,7 @@ pub(crate) struct FastHistogram {
     sum: AtomicU64,
 }
 
+#[cfg(not(feature = "hdr"))]
 impl FastHistogram {
     /// Creates a new empty histogram.
     ///
@@ -713,6 +719,7 @@ impl FastHistogram {
     }
 }
 
+#[cfg(not(feature = "hdr"))]
 impl Default for FastHistogram {
     fn default() -> Self {
         Self::new()
@@ -830,6 +837,10 @@ impl Default for Histogram {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[cfg(not(feature = "hdr"))]
+    use std::sync::Arc;
+    #[cfg(not(feature = "hdr"))]
+    use std::thread;
 
     #[inline]
     fn perf_enabled() -> bool {
@@ -1045,7 +1056,7 @@ mod tests {
         assert_eq!(hist.median(), Some(5_000));
     }
 
-    #[cfg(feature = "hdr")]
+    #[cfg(not(feature = "hdr"))]
     #[test]
     fn test_parity_fast_vs_hdr_basic_stats() {
         // Fast backend
@@ -1072,7 +1083,7 @@ mod tests {
         assert_eq!(fast.median(), hdr.median());
     }
 
-    #[cfg(feature = "hdr")]
+    #[cfg(not(feature = "hdr"))]
     #[test]
     fn test_parity_fast_vs_hdr_percentiles() {
         let fast = FastHistogram::new();
