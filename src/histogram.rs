@@ -1056,7 +1056,6 @@ mod tests {
         assert_eq!(hist.median(), Some(5_000));
     }
 
-
     #[cfg(not(feature = "hdr"))]
     #[test]
     fn test_precision_linear_buckets() {
