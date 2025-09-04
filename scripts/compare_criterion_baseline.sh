@@ -24,11 +24,20 @@ if [[ ! -f "${BASELINE_JSON}" ]]; then
   exit 2
 fi
 
-BASE_DIR="target/criterion/${GROUP_NAME}"
-if [[ ! -d "${BASE_DIR}" ]]; then
-  echo "error: criterion group directory not found: ${BASE_DIR}" >&2
+# Determine base directory: support both nested and flat criterion layouts
+# 1) Nested:   target/criterion/<GROUP_NAME>/<KEY>/new/estimates.json
+# 2) Flat:     target/criterion/<KEY>/new/estimates.json
+if [[ -d "target/criterion/${GROUP_NAME}" ]]; then
+  BASE_DIR="target/criterion/${GROUP_NAME}"
+elif [[ -d "target/criterion" ]]; then
+  BASE_DIR="target/criterion"
+else
+  echo "error: criterion directory not found: target/criterion" >&2
   exit 2
 fi
+
+# Optional: show which layout is used (useful in CI logs)
+echo "Using Criterion base directory: ${BASE_DIR}" >&2
 
 fail_count=0
 
