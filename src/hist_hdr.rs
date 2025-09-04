@@ -33,8 +33,9 @@ impl Histogram {
                 // avoid panicking in release: log via debug assertion and fall back
                 // to a histogram with default dynamic max using the same sigfigs.
                 debug_assert!(false, "HDR bounds init failed: {e}");
-                hdrhistogram::Histogram::new(3)
-                    .unwrap_or_else(|_| hdrhistogram::Histogram::new_with_max(3_600_000_000_000u64, 3).unwrap())
+                hdrhistogram::Histogram::new(3).unwrap_or_else(|_| {
+                    hdrhistogram::Histogram::new_with_max(3_600_000_000_000u64, 3).unwrap()
+                })
             });
         Self {
             inner: RwLock::new(h),
