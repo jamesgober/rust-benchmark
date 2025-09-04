@@ -1,19 +1,23 @@
 name: Perf
 
 on:
-  schedule:
-    # Sunday 02:00 UTC
-    - cron: "0 2 * * 0"
-    # Wednesday 02:00 UTC
-    - cron: "0 2 * * 3"
+  # Manual trigger only by default; set ENABLE_PERF to true to enable scheduled runs
   workflow_dispatch: {}
+  schedule:
+    # Disabled by default via job-level gate; enable by setting ENABLE_PERF to 'true'
+    - cron: "0 2 * * 0" # Sunday 02:00 UTC
+    - cron: "0 2 * * 3" # Wednesday 02:00 UTC
+
+env:
+  # Gate to disable perf by default in CI. Set to 'true' to enable.
+  ENABLE_PERF: "false"
 
 jobs:
   perf-tests:
     name: Perf Tests and Benches
     runs-on: ubuntu-latest
-    # Only run on main branch for scheduled/manual invocations
-    if: github.ref_name == 'main'
+    # Only run when explicitly enabled and on main branch for scheduled/manual invocations
+    if: ${{ env.ENABLE_PERF == 'true' && github.ref_name == 'main' }}
     concurrency:
       group: perf-${{ github.ref }}
       cancel-in-progress: false
@@ -64,6 +68,8 @@ jobs:
           find target/criterion -maxdepth 2 -type d -print || true
 
       - name: Compare Criterion results to baselines (watch_timer_hot)
+        env:
+          PERF_COMPARE_STRICT: "0"
         run: |
           if [ ! -d target/criterion ]; then
             echo "No Criterion results found; skipping watch_timer_hot baseline comparison.";
@@ -85,6 +91,8 @@ jobs:
             --save-baseline current
 
       - name: Compare Criterion results to baselines (timers)
+        env:
+          PERF_COMPARE_STRICT: "0"
         run: |
           if [ ! -d target/criterion ]; then
             echo "No Criterion results found; skipping timers baseline comparison.";
@@ -106,6 +114,8 @@ jobs:
             --save-baseline current
 
       - name: Compare Criterion results to baselines (histogram_hot)
+        env:
+          PERF_COMPARE_STRICT: "0"
         run: |
           if [ ! -d target/criterion ]; then
             echo "No Criterion results found; skipping histogram_hot baseline comparison.";

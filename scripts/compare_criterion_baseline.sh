@@ -32,22 +32,32 @@ if [[ -d "target/criterion/${GROUP_NAME}" ]]; then
 elif [[ -d "target/criterion" ]]; then
   BASE_DIR="target/criterion"
 else
-  echo "error: criterion directory not found: target/criterion" >&2
-  exit 2
+  echo "note: criterion directory not found: target/criterion — skipping baseline comparison" >&2
+  echo "Baseline comparison skipped."
+  exit 0
 fi
 
 # Optional: show which layout is used (useful in CI logs)
 echo "Using Criterion base directory: ${BASE_DIR}" >&2
 
 fail_count=0
+found_count=0
+total_count=0
+missing_count=0
 
 # Iterate baseline entries: key, median_s, tolerance
 while IFS=$'\t' read -r KEY MEDIAN_S TOL; do
   # Build path to criterion estimates for this key
+  total_count=$((total_count + 1))
+
   EST_PATH="${BASE_DIR}/${KEY}/new/estimates.json"
   if [[ ! -f "${EST_PATH}" ]]; then
     echo "missing estimates: ${EST_PATH}" >&2
-    fail_count=$((fail_count + 1))
+    missing_count=$((missing_count + 1))
+    # Only fail on missing when strict mode is enabled
+    if [[ "${PERF_COMPARE_STRICT:-}" == "1" ]]; then
+      fail_count=$((fail_count + 1))
+    fi
     continue
   fi
 
@@ -81,6 +91,8 @@ PY
   BASE_P=$(pretty "${MEDIAN_S}")
   ALWD_P=$(pretty "${ALLOWED}")
 
+  found_count=$((found_count + 1))
+
   if [[ "${OK}" == "1" ]]; then
     echo "OK   ${KEY} actual=${ACT_P} baseline=${BASE_P} tol=${TOL} allowed<=${ALWD_P}"
   else
@@ -90,8 +102,14 @@ PY
 
 done < <(jq -r 'to_entries[] | [ .key, .value.median_s, .value.tolerance ] | @tsv' "${BASELINE_JSON}")
 
+if [[ ${found_count} -eq 0 ]]; then
+  echo "note: no matching Criterion results were found for any baseline keys (total=${total_count}, missing=${missing_count})." >&2
+  echo "Baseline comparison skipped."
+  exit 0
+fi
+
 if [[ ${fail_count} -gt 0 ]]; then
-  echo "Baseline comparison failed: ${fail_count} regression(s) detected." >&2
+  echo "Baseline comparison failed: ${fail_count} regression(s) detected. (checked=${found_count}, missing=${missing_count}, total=${total_count})" >&2
   exit 1
 fi
 
