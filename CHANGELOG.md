@@ -19,8 +19,8 @@
 - Bench workflow `.github/workflows/bench.yml`: use `examples/zero_overhead.rs` for the no-default-features run, and keep `overhead_compare` for the enabled run to avoid feature gating conflicts.
 - Module order clean-up in `src/lib.rs` to satisfy Code Quality check (place `mod trace;` after `mod timer;`).
 - Documentation consistency sweep: ensure install snippets reference `0.7.1` across `docs/` feature pages and API.
-- Perf workflow `.github/workflows/perf.yml`: gated behind `ENABLE_PERF` (default `false`) so perf does not run by default in CI; comparison steps include pre-checks and run in lenient mode by default.
-- Baseline comparator `scripts/compare_criterion_baseline.sh`: made non-fatal when Criterion output is absent or no baseline keys match; add `PERF_COMPARE_STRICT=1` to enforce strict behavior. Defaults to lenient; workflow passes `PERF_COMPARE_STRICT=0`.
+- Perf workflow `.github/workflows/perf.yml`: manual-only (no schedules), gated to run only when dispatched on `main`; comparison steps include pre-checks and run in lenient mode by default.
+- Baseline comparator `scripts/compare_criterion_baseline.sh`: made non-fatal when Criterion output is absent or no baseline keys match; `PERF_COMPARE_STRICT=1` enables strict behavior. Defaults to lenient.
 
 
 <br>
