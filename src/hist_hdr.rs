@@ -28,7 +28,14 @@ impl Histogram {
     pub fn new() -> Self {
         // 1ns .. ~1h, 3 significant figures by default to match Watch defaults.
         let h = hdrhistogram::Histogram::new_with_bounds(1, 3_600_000_000_000u64, 3)
-            .expect("valid hdr bounds");
+            .unwrap_or_else(|e| {
+                // Bounds are compile-time constants and valid. If construction fails,
+                // avoid panicking in release: log via debug assertion and fall back
+                // to a histogram with default dynamic max using the same sigfigs.
+                debug_assert!(false, "HDR bounds init failed: {e}");
+                hdrhistogram::Histogram::new(3)
+                    .unwrap_or_else(|_| hdrhistogram::Histogram::new_with_max(3_600_000_000_000u64, 3).unwrap())
+            });
         Self {
             inner: RwLock::new(h),
         }

@@ -13,6 +13,7 @@
 ### Changed
 - `src/watch.rs`: Recover from `RwLock` poisoning instead of panicking. Replaced `expect("... poisoned")` on `read()`/`write()` with `unwrap_or_else(|e| e.into_inner())` on the `std::sync::RwLock` path, aligning with `collector::Collector` behavior for production robustness.
  - `src/collector.rs`, `src/watch.rs`: Replace redundant closures `unwrap_or_else(|e| e.into_inner())` with method form `unwrap_or_else(std::sync::PoisonError::into_inner)` to satisfy `clippy::redundant-closure-for-method-calls` (no functional change).
+ - `src/hist_hdr.rs`: Remove `expect` on HDR histogram init; use safe fallback on construction error with a debug assertion in debug builds to avoid panics in release.
 
 ### Documentation
 - `src/watch.rs`: Updated rustdoc sections from "Panics" to "Poisoning" for `record()`, `snapshot()`, `clear()`, and `clear_name()` to reflect poisoning recovery behavior.
