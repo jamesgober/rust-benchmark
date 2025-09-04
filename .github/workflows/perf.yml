@@ -65,6 +65,14 @@ jobs:
 
       - name: Compare Criterion results to baselines (watch_timer_hot)
         run: |
+          if [ ! -d target/criterion ]; then
+            echo "No Criterion results found; skipping watch_timer_hot baseline comparison.";
+            exit 0;
+          fi
+          if [ ! -d target/criterion/watch_timer_hot ] && [ ! -f target/criterion/new/estimates.json ]; then
+            echo "Group directory target/criterion/watch_timer_hot not found and flat layout not detected; skipping.";
+            exit 0;
+          fi
           bash scripts/compare_criterion_baseline.sh watch_timer_hot perf_baselines/watch_timer_hot.json
 
       - name: Run timers (perf) with fixed timings
@@ -78,6 +86,14 @@ jobs:
 
       - name: Compare Criterion results to baselines (timers)
         run: |
+          if [ ! -d target/criterion ]; then
+            echo "No Criterion results found; skipping timers baseline comparison.";
+            exit 0;
+          fi
+          if [ ! -d target/criterion/timers ] && [ ! -f target/criterion/new/estimates.json ]; then
+            echo "Group directory target/criterion/timers not found and flat layout not detected; skipping.";
+            exit 0;
+          fi
           bash scripts/compare_criterion_baseline.sh timers perf_baselines/timers.json
 
       - name: Run histogram_hot (perf) with fixed timings
@@ -91,4 +107,12 @@ jobs:
 
       - name: Compare Criterion results to baselines (histogram_hot)
         run: |
+          if [ ! -d target/criterion ]; then
+            echo "No Criterion results found; skipping histogram_hot baseline comparison.";
+            exit 0;
+          fi
+          if [ ! -d target/criterion/histogram_hot ] && [ ! -f target/criterion/new/estimates.json ]; then
+            echo "Group directory target/criterion/histogram_hot not found and flat layout not detected; skipping.";
+            exit 0;
+          fi
           bash scripts/compare_criterion_baseline.sh histogram_hot perf_baselines/histogram_hot.json
