@@ -297,6 +297,21 @@ async fn main() {
 This repository includes Criterion benchmarks that measure the overhead of the public API compared to a direct <code>Instant::now()</code> baseline.
 </p>
 
+<h3>Performance Baselines &amp; CI</h3>
+<p>
+Baseline comparison is integrated into the <code>Perf</code> workflow (<code>.github/workflows/perf.yml</code>) and summarizes results in the GitHub <b>Step Summary</b>.
+The comparator script <code>scripts/compare_criterion_baseline.sh</code> checks current Criterion outputs against JSON baselines in <code>perf_baselines/*.json</code> with per-key tolerances.
+</p>
+<ul>
+  <li><b>Lenient by default</b>: comparisons run with <code>PERF_COMPARE_STRICT=0</code> so regressions are <b>reported but CI passes</b>.</li>
+  <li><b>Strict gate (optional)</b>: set <code>PERF_COMPARE_STRICT=1</code> on a step to make regressions <b>fail</b> the job.</li>
+  <li><b>Layouts supported</b>: both nested (<code>target/criterion/&lt;group&gt;/.../new/estimates.json</code>) and flat (<code>target/criterion/.../new/estimates.json</code>).</li>
+  <li><b>Local run</b>:
+    <pre><code>cargo bench -F perf-tests --bench watch_timer_hot -- --measurement-time 5 --warm-up-time 2 --save-baseline current
+bash scripts/compare_criterion_baseline.sh watch_timer_hot perf_baselines/watch_timer_hot.json</code></pre>
+  </li>
+</ul>
+
 <hr>
 
 <h2>Safety &amp; Edge Cases</h2>
@@ -308,7 +323,7 @@ This repository includes Criterion benchmarks that measure the overhead of the p
   <li><b>Drop safety</b>: <code>Timer</code> records exactly once. It guards against double-record by storing <code>Option&lt;Instant&gt;</code> and recording on <code>Drop</code> even during unwinding.</li>
   <li><b>Empty datasets</b>: <code>Watch::snapshot()</code> and <code>Collector</code> handle empty sets defensively. Snapshots for empty histograms return zeros; <code>Collector::stats()</code> returns <code>None</code> for missing keys.</li>
   <li><b>Overflow protection</b>: <code>Collector</code> uses <code>saturating_add</code> for total accumulation and 128-bit nanosecond storage in <code>Duration</code> to provide ample headroom.</li>
-  <li><b>Thread safety</b>: All shared structures use <code>RwLock</code> with short hold-times: clone under read lock, compute outside the lock. Methods will panic only if a lock is poisoned by a prior panic.</li>
+  <li><b>Thread safety</b>: All shared structures use <code>RwLock</code> with short hold-times: clone under read lock, compute outside the lock. Methods <b>recover from lock poisoning</b> (e.g., <code>unwrap_or_else(|e| e.into_inner())</code>) to avoid panics in production.</li>
   <li><b>Feature gating</b>: Production metrics are gated behind <code>features=["std","metrics"]</code>. Disable default features to make all timing a no-op for zero-overhead builds.</li>
 </ul>
 

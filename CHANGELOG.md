@@ -10,9 +10,26 @@
 
 ## [Unreleased]
 
+### Changed
+- `src/watch.rs`: Recover from `RwLock` poisoning instead of panicking. Replaced `expect("... poisoned")` on `read()`/`write()` with `unwrap_or_else(|e| e.into_inner())` on the `std::sync::RwLock` path, aligning with `collector::Collector` behavior for production robustness.
+ - `src/collector.rs`, `src/watch.rs`: Replace redundant closures `unwrap_or_else(|e| e.into_inner())` with method form `unwrap_or_else(std::sync::PoisonError::into_inner)` to satisfy `clippy::redundant-closure-for-method-calls` (no functional change).
 
+### Documentation
+- `src/watch.rs`: Updated rustdoc sections from "Panics" to "Poisoning" for `record()`, `snapshot()`, `clear()`, and `clear_name()` to reflect poisoning recovery behavior.
+- `docs/BENCHMARK.md`: Replaced TODO placeholders with clear TBD markers and actionable guidance in the "Allocations (placeholder)" and "Contention Profile (placeholder)" sections.
+ - `README.md`: Added "Performance Baselines & CI" section with local run example, lenient vs strict gating via `PERF_COMPARE_STRICT`, and step summary notes. Updated "Thread safety" to explicitly state poisoning recovery.
 
+### CI / Tooling
+- `.github/workflows/ci.yml`: Replaced TODO comment in the "Check benchmark results" step with a concrete plan for benchmark regression detection using baselines in `perf_baselines/*.json` and tolerances. Keeps step non-fatal until baselines are established.
+ - `.github/workflows/perf.yml`: Append comparator output to GitHub Actions Step Summary; keep comparisons non-fatal by default (`PERF_COMPARE_STRICT=0`), allow strict gating via env override.
+ - `scripts/compare_criterion_baseline.sh`: Non-fatal by default; strict failure only when `PERF_COMPARE_STRICT=1`.
 
+### Maintenance
+ - Code style: Ran `cargo fmt --all` to enforce formatting.
+ - Lints: `cargo clippy --all-targets --all-features -D warnings` clean.
+ - Tests: `cargo test --all-features` and default-features runs are passing; trybuild and property tests included.
+ - Docs: `RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --all-features` passes without warnings.
+ - Examples/Benches: `cargo check --examples`, `cargo check --no-default-features --examples`, and `cargo bench --no-run` all succeed.
 
 <br>
 

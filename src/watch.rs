@@ -124,7 +124,10 @@ impl<B: HistBackend> WatchGeneric<B> {
     #[cfg(not(feature = "parking-lot-locks"))]
     #[inline]
     fn read_hist(&self) -> ReadGuard<'_, B> {
-        self.inner.hist.read().expect("watch read lock poisoned")
+        self.inner
+            .hist
+            .read()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
     }
 
     #[cfg(feature = "parking-lot-locks")]
@@ -136,7 +139,10 @@ impl<B: HistBackend> WatchGeneric<B> {
     #[cfg(not(feature = "parking-lot-locks"))]
     #[inline]
     fn write_hist(&self) -> WriteGuard<'_, B> {
-        self.inner.hist.write().expect("watch write lock poisoned")
+        self.inner
+            .hist
+            .write()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
     }
 
     /// Create a new Watch with sensible defaults.
@@ -192,8 +198,9 @@ impl<B: HistBackend> WatchGeneric<B> {
     ///
     /// Safe, thread-safe, and minimal overhead.
     ///
-    /// # Panics
-    /// Panics if the internal lock is poisoned from a prior panic.
+    /// # Poisoning
+    /// If the internal lock has been poisoned due to a prior panic, this method
+    /// will recover the inner data and continue operating to avoid panics in production.
     ///
     /// # Examples
     /// ```

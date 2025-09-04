@@ -79,9 +79,11 @@ impl Collector {
 
     /// Records a measurement.
     ///
-    /// # Panics
+    /// # Poisoning
     ///
-    /// Panics if the lock is poisoned.
+    /// If the internal lock is poisoned due to a previous panic, this method
+    /// will recover the inner data and continue operating to avoid panics in
+    /// production code.
     ///
     /// # Examples
     /// ```
@@ -92,7 +94,10 @@ impl Collector {
     /// assert_eq!(c.stats("work").unwrap().count, 1);
     /// ```
     pub fn record(&self, measurement: &Measurement) {
-        let mut lock = self.measurements.write().unwrap();
+        let mut lock = self
+            .measurements
+            .write()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
         lock.entry(measurement.name)
             .or_default()
             .push(measurement.duration);
@@ -114,7 +119,10 @@ impl Collector {
     /// assert_eq!(s.total.as_nanos(), 5_000);
     /// ```
     pub fn record_duration(&self, name: &'static str, duration: Duration) {
-        let mut lock = self.measurements.write().unwrap();
+        let mut lock = self
+            .measurements
+            .write()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
         lock.entry(name).or_default().push(duration);
     }
 
@@ -139,7 +147,10 @@ impl Collector {
     pub fn stats(&self, name: &str) -> Option<Stats> {
         // Clone the vector under a read lock to minimize lock hold time, then compute outside the lock
         let durations: Vec<Duration> = {
-            let lock = self.measurements.read().unwrap();
+            let lock = self
+                .measurements
+                .read()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
             lock.get(name)?.clone()
         };
 
@@ -197,7 +208,10 @@ impl Collector {
     pub fn all_stats(&self) -> Vec<(String, Stats)> {
         // Snapshot names and their vectors under a read lock, then compute outside to avoid nested locking
         let snapshot: Vec<(&'static str, Vec<Duration>)> = {
-            let lock = self.measurements.read().unwrap();
+            let lock = self
+                .measurements
+                .read()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
             lock.iter().map(|(&name, v)| (name, v.clone())).collect()
         };
 
@@ -256,7 +270,10 @@ impl Collector {
     /// assert!(c.stats("t").is_none());
     /// ```
     pub fn clear(&self) {
-        let mut lock = self.measurements.write().unwrap();
+        let mut lock = self
+            .measurements
+            .write()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
         lock.clear();
     }
 
@@ -275,7 +292,10 @@ impl Collector {
     /// assert!(c.stats("x").is_none());
     /// ```
     pub fn clear_name(&self, name: &str) {
-        let mut lock = self.measurements.write().unwrap();
+        let mut lock = self
+            .measurements
+            .write()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
         lock.remove(name);
     }
 }

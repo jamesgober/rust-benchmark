@@ -368,8 +368,11 @@ jobs:
       - name: Check benchmark results
         if: github.event_name == 'pull_request'
         run: |
-          # TODO: Add regression detection once baselines are established
-          echo "Benchmark results would be compared here"
+          # Benchmark regression detection placeholder. Intended plan:
+          # 1) Establish baselines in perf_baselines/*.json on main via a scheduled job.
+          # 2) Compare current PR results against baselines with a small tolerance window.
+          # 3) Fail the job if regressions exceed thresholds; otherwise, post a summary comment.
+          echo "Benchmark results comparison step (baselines required)"
 
   # Memory safety checks with Miri (nightly)
   miri:

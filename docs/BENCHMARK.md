@@ -101,7 +101,7 @@ stats::array/k10_n1000  time:   [15.531 µs 16.423 µs 17.718 µs]
 <summary><b>Allocations (placeholder)</b></summary>
 
 <p>
-  <em>TODO: Fill in allocation counts/bytes after running Instruments (Allocations) on benches:</em>
+  <em>TBD: Fill in allocation counts/bytes after running Instruments (Allocations) on benches:</em>
   <br>
   • <code>overhead</code> — core hot path (time!/measure)
   <br>
@@ -119,8 +119,8 @@ stats::array/k10_n1000  time:   [15.531 µs 16.423 µs 17.718 µs]
   <br>
   <pre>
   bench              allocs/iter   bytes/iter
-  overhead           [TODO]        [TODO]
-  stats              [TODO]        [TODO]
+  overhead           [TBD]         [TBD]
+  stats              [TBD]         [TBD]
   </pre>
   <br>
   Notes: aim for zero allocs on hot paths; any non-zero should be explained (e.g., formatting, map growth).
@@ -133,7 +133,7 @@ stats::array/k10_n1000  time:   [15.531 µs 16.423 µs 17.718 µs]
 <summary><b>Contention Profile (placeholder)</b></summary>
 
 <p>
-  <em>TODO: Fill in top hotspots after running Instruments (Time Profiler) for <code>collector_contention</code> across threads [1,2,4,8,16].</em>
+  <em>TBD: Fill in top hotspots after running Instruments (Time Profiler) for <code>collector_contention</code> across threads [1,2,4,8,16].</em>
   <br><br>
   Suggested command:
   <br>
@@ -150,17 +150,17 @@ stats::array/k10_n1000  time:   [15.531 µs 16.423 µs 17.718 µs]
   Example summary to complete:
   <pre>
   threads  scenario      top hotspots (function -> %time)
-  1        single_key    [TODO]
-  2        single_key    [TODO]
-  4        single_key    [TODO]
-  8        single_key    [TODO]
-  16       single_key    [TODO]
+  1        single_key    [TBD]
+  2        single_key    [TBD]
+  4        single_key    [TBD]
+  8        single_key    [TBD]
+  16       single_key    [TBD]
 
-  1        many_keys     [TODO]
-  2        many_keys     [TODO]
-  4        many_keys     [TODO]
-  8        many_keys     [TODO]
-  16       many_keys     [TODO]
+  1        many_keys     [TBD]
+  2        many_keys     [TBD]
+  4        many_keys     [TBD]
+  8        many_keys     [TBD]
+  16       many_keys     [TBD]
   </pre>
   <br>
   Notes: identify lock hotspots (e.g., map lookups, RwLock/Mutex), quantify scaling deltas.

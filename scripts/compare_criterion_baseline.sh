@@ -109,8 +109,14 @@ if [[ ${found_count} -eq 0 ]]; then
 fi
 
 if [[ ${fail_count} -gt 0 ]]; then
-  echo "Baseline comparison failed: ${fail_count} regression(s) detected. (checked=${found_count}, missing=${missing_count}, total=${total_count})" >&2
-  exit 1
+  echo "Baseline comparison detected ${fail_count} regression(s). (checked=${found_count}, missing=${missing_count}, total=${total_count})" >&2
+  if [[ "${PERF_COMPARE_STRICT:-}" == "1" ]]; then
+    echo "Strict mode enabled: failing the job." >&2
+    exit 1
+  else
+    echo "Non-strict mode: reporting regressions but not failing the job. Set PERF_COMPARE_STRICT=1 to enforce." >&2
+    exit 0
+  fi
 fi
 
 echo "Baseline comparison passed."

@@ -71,7 +71,8 @@ jobs:
             echo "Group directory target/criterion/watch_timer_hot not found and flat layout not detected; skipping.";
             exit 0;
           fi
-          bash scripts/compare_criterion_baseline.sh watch_timer_hot perf_baselines/watch_timer_hot.json
+          echo "## watch_timer_hot baseline comparison" >> "$GITHUB_STEP_SUMMARY"
+          bash scripts/compare_criterion_baseline.sh watch_timer_hot perf_baselines/watch_timer_hot.json | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Run timers (perf) with fixed timings
         env:
@@ -94,7 +95,8 @@ jobs:
             echo "Group directory target/criterion/timers not found and flat layout not detected; skipping.";
             exit 0;
           fi
-          bash scripts/compare_criterion_baseline.sh timers perf_baselines/timers.json
+          echo "\n## timers baseline comparison" >> "$GITHUB_STEP_SUMMARY"
+          bash scripts/compare_criterion_baseline.sh timers perf_baselines/timers.json | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Run histogram_hot (perf) with fixed timings
         env:
@@ -117,4 +119,5 @@ jobs:
             echo "Group directory target/criterion/histogram_hot not found and flat layout not detected; skipping.";
             exit 0;
           fi
-          bash scripts/compare_criterion_baseline.sh histogram_hot perf_baselines/histogram_hot.json
+          echo "\n## histogram_hot baseline comparison" >> "$GITHUB_STEP_SUMMARY"
+          bash scripts/compare_criterion_baseline.sh histogram_hot perf_baselines/histogram_hot.json | tee -a "$GITHUB_STEP_SUMMARY"
