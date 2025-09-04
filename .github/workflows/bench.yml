@@ -35,9 +35,9 @@ jobs:
       - name: Compare benchmark vs disabled (example)
         run: |
           set -e
-          echo "Running example with disabled mode (no-default-features)"
-          cargo run --release --example overhead_compare --no-default-features > disabled.txt
-          echo "Running example with benchmark mode (std+benchmark)"
+          echo "Running zero_overhead example with disabled mode (no-default-features)"
+          cargo run --release --example zero_overhead --no-default-features > disabled.txt
+          echo "Running overhead_compare example with benchmark mode (std+benchmark)"
           cargo run --release --example overhead_compare --no-default-features --features "std benchmark" > benchmark.txt
           echo "--- disabled.txt" && cat disabled.txt
           echo "--- benchmark.txt" && cat benchmark.txt

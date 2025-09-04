@@ -10,6 +10,15 @@
 
 ## [Unreleased]
 
+### Fixed
+- Disabled-path `benchmark!` macro parse error under `collector`-only builds (no `benchmark`): corrected macro expansion to use `$($body)*` in disabled arms.
+- Clippy warnings in `src/trace.rs` (`inline_always`, `uninlined_format_args`): replaced with `#[inline]` and inline format args.
+
+### Maintenance
+- Bench workflow `.github/workflows/bench.yml`: use `examples/zero_overhead.rs` for the no-default-features run, and keep `overhead_compare` for the enabled run to avoid feature gating conflicts.
+- Module order clean-up in `src/lib.rs` to satisfy Code Quality check (place `mod trace;` after `mod timer;`).
+- Documentation consistency sweep: ensure install snippets reference `0.7.1` across `docs/` feature pages and API.
+
 
 <br>
 
