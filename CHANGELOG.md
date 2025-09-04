@@ -10,6 +10,14 @@
 
 ## [Unreleased]
 
+
+
+
+
+<br>
+
+## [0.7.2] - 2025-09-04
+
 ### Fixed
 - Disabled-path `benchmark!` macro parse error under `collector`-only builds (no `benchmark`): corrected macro expansion to use `$($body)*` in disabled arms.
 - Clippy warnings in `src/trace.rs` (`inline_always`, `uninlined_format_args`): replaced with `#[inline]` and inline format args.
@@ -18,7 +26,7 @@
 ### Maintenance
 - Bench workflow `.github/workflows/bench.yml`: use `examples/zero_overhead.rs` for the no-default-features run, and keep `overhead_compare` for the enabled run to avoid feature gating conflicts.
 - Module order clean-up in `src/lib.rs` to satisfy Code Quality check (place `mod trace;` after `mod timer;`).
-- Documentation consistency sweep: ensure install snippets reference `0.7.1` across `docs/` feature pages and API.
+- Documentation consistency sweep: ensure install snippets reference `0.7.2` across `docs/` feature pages and API.
 - Perf workflow `.github/workflows/perf.yml`: manual-only (no schedules), gated to run only when dispatched on `main`; comparison steps include pre-checks and run in lenient mode by default.
 - Baseline comparator `scripts/compare_criterion_baseline.sh`: made non-fatal when Criterion output is absent or no baseline keys match; `PERF_COMPARE_STRICT=1` enables strict behavior. Defaults to lenient.
 
@@ -277,11 +285,10 @@ Initial pre-dev release for backup.
 - `README` file.
 
 
-
-
-[Unreleased]: https://github.com/jamesgober/rust-benchmark/compare/v0.7.1...HEAD
-[0.7.1]: https://github.com/jamesgober/rust-benchmark/compare/v0.7.0...v0.7.1
+[Unreleased]: https://github.com/jamesgober/rust-benchmark/compare/v0.7.2...HEAD
 [0.8.0]: https://github.com/jamesgober/rust-benchmark/compare/v0.7.0...v0.8.0
+[0.7.2]: https://github.com/jamesgober/rust-benchmark/compare/v0.7.1...v0.7.2
+[0.7.1]: https://github.com/jamesgober/rust-benchmark/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/jamesgober/rust-benchmark/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/jamesgober/rust-benchmark/compare/v0.5.8...v0.6.0
 [0.5.8]: https://github.com/jamesgober/rust-benchmark/compare/v0.5.7...v0.5.8

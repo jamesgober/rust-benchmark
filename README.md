@@ -111,7 +111,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-benchmark = "0.7.1"
+benchmark = "0.7.2"
 ```
 
 <br>
@@ -123,7 +123,7 @@ benchmark = "0.7.1"
 [dependencies]
 
 # Enables Production & Development.
-benchmark = { version = "0.7.1", features = ["standard"] }
+benchmark = { version = "0.7.2", features = ["standard"] }
 ```
 
 <br>
@@ -134,7 +134,7 @@ Enable production observability using `Watch`/`Timer` or the `stopwatch!` macro.
 Cargo features:
 ```toml
 [dependencies]
-benchmark = { version = "0.7.1", features = ["std", "metrics"] }
+benchmark = { version = "0.7.2", features = ["std", "metrics"] }
 ```
 
 Record with `Timer` (auto-record on drop):
@@ -169,7 +169,7 @@ assert!(watch.snapshot()["render"].count >= 1);
 ```toml
 [dependencies]
 # Disable default features for true zero-overhead
-benchmark = { version = "0.7.1", default-features = false }
+benchmark = { version = "0.7.2", default-features = false }
 ```
 <br>
 

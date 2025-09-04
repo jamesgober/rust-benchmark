@@ -55,10 +55,10 @@ The <b>benchmark</b> feature provides a lightweight, statistically-sound toolkit
 [dependencies]
 
 # Benchmark is enabled by default.
-benchmark = "0.7.1"
+benchmark = "0.7.2"
 
 # or enable benchmark explicitly.
-benchmark = { version = "0.7.1", features = ["benchmark"]}
+benchmark = { version = "0.7.2", features = ["benchmark"]}
 ```
 > ⚙️ Add directly to your `Cargo.toml`.
 
