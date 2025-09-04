@@ -51,7 +51,17 @@ jobs:
         env:
           PERF_TESTS: "1"
         run: |
-          cargo bench -F "perf-tests metrics" --bench watch_timer_hot -- --measurement-time 5 --warm-up-time 2
+          cargo bench -F "perf-tests metrics" --bench watch_timer_hot -- \
+            --measurement-time 5 \
+            --warm-up-time 2 \
+            --save-baseline current
+
+      - name: Show Criterion output (watch_timer_hot)
+        run: |
+          echo "Listing target/criterion (if present)"
+          ls -la target || true
+          ls -la target/criterion || true
+          find target/criterion -maxdepth 2 -type d -print || true
 
       - name: Compare Criterion results to baselines (watch_timer_hot)
         run: |
@@ -61,7 +71,10 @@ jobs:
         env:
           PERF_TESTS: "1"
         run: |
-          cargo bench -F perf-tests --bench timers -- --measurement-time 5 --warm-up-time 2
+          cargo bench -F perf-tests --bench timers -- \
+            --measurement-time 5 \
+            --warm-up-time 2 \
+            --save-baseline current
 
       - name: Compare Criterion results to baselines (timers)
         run: |
@@ -71,7 +84,10 @@ jobs:
         env:
           PERF_TESTS: "1"
         run: |
-          cargo bench -F perf-tests --bench histogram_hot -- --measurement-time 5 --warm-up-time 2
+          cargo bench -F perf-tests --bench histogram_hot -- \
+            --measurement-time 5 \
+            --warm-up-time 2 \
+            --save-baseline current
 
       - name: Compare Criterion results to baselines (histogram_hot)
         run: |
