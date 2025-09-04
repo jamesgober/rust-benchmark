@@ -111,7 +111,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-benchmark = "0.7.2"
+benchmark = "0.8.0"
 ```
 
 <br>
@@ -123,7 +123,7 @@ benchmark = "0.7.2"
 [dependencies]
 
 # Enables Production & Development.
-benchmark = { version = "0.7.2", features = ["standard"] }
+benchmark = { version = "0.8.0", features = ["standard"] }
 ```
 
 <br>
@@ -134,7 +134,7 @@ Enable production observability using `Watch`/`Timer` or the `stopwatch!` macro.
 Cargo features:
 ```toml
 [dependencies]
-benchmark = { version = "0.7.2", features = ["std", "metrics"] }
+benchmark = { version = "0.8.0", features = ["std", "metrics"] }
 ```
 
 Record with `Timer` (auto-record on drop):
@@ -169,7 +169,7 @@ assert!(watch.snapshot()["render"].count >= 1);
 ```toml
 [dependencies]
 # Disable default features for true zero-overhead
-benchmark = { version = "0.7.2", default-features = false }
+benchmark = { version = "0.8.0", default-features = false }
 ```
 <br>
 
@@ -324,6 +324,7 @@ bash scripts/compare_criterion_baseline.sh watch_timer_hot perf_baselines/watch_
   <li><b>Empty datasets</b>: <code>Watch::snapshot()</code> and <code>Collector</code> handle empty sets defensively. Snapshots for empty histograms return zeros; <code>Collector::stats()</code> returns <code>None</code> for missing keys.</li>
   <li><b>Overflow protection</b>: <code>Collector</code> uses <code>saturating_add</code> for total accumulation and 128-bit nanosecond storage in <code>Duration</code> to provide ample headroom.</li>
   <li><b>Thread safety</b>: All shared structures use <code>RwLock</code> with short hold-times: clone under read lock, compute outside the lock. Methods <b>recover from lock poisoning</b> (e.g., <code>unwrap_or_else(|e| e.into_inner())</code>) to avoid panics in production.</li>
+  <li><b>HDR backend safety</b> (feature <code>hdr</code>): HDR histogram initialization uses a <b>non-panicking</b> path. If construction with fixed bounds fails at runtime, we trigger a <code>debug_assert!</code> in debug builds and fall back to a safe histogram configuration in release builds to maintain availability.</li>
   <li><b>Feature gating</b>: Production metrics are gated behind <code>features=["std","metrics"]</code>. Disable default features to make all timing a no-op for zero-overhead builds.</li>
 </ul>
 

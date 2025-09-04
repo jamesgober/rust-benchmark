@@ -38,7 +38,7 @@
 - **`collector`** (default): Collector, `Stats`, and built-in histogram backend.
 - **`metrics`** (optional): Production metrics (`Watch`, `Timer`, `stopwatch!`).
 - **`high-precision`** (optional): Selects the high-precision histogram backend.
-- **`hdr`** (optional): External HDR histogram backend; requires `high-precision`.
+- **`hdr`** (optional): External HDR histogram backend; requires `high-precision`. Initialization is non-panicking with a safe fallback in release builds.
 - **`parking-lot-locks`** (optional): Faster synchronization for hot paths.
 
 Notes:
@@ -76,7 +76,7 @@ Notes:
 #### Manual installation:
 ```toml
 [dependencies]
-benchmark = "0.7.2" # default features enabled (benchmark + collector)
+benchmark = "0.8.0" # default features enabled (benchmark + collector)
 ```
 > ⚙️ Add directly to your `Cargo.toml`.
 
@@ -104,7 +104,7 @@ Enables the [**`benchmark`**](./BENCHMARK.md) feature.
 #### Manual installation:
 ```toml
 [dependencies]
-benchmark = { version = "0.7.2", features = ["metrics"]}
+benchmark = { version = "0.8.0", features = ["metrics"]}
 ```
 
 #### Terminal
@@ -128,7 +128,7 @@ cargo add benchmark -F metrics
 #### Manual installation:
 ```toml
 [dependencies]
-benchmark = { version = "0.7.2", default-features = false }
+benchmark = { version = "0.8.0", default-features = false }
 ```
 > ⚙️ Add directly to your `Cargo.toml`.
 

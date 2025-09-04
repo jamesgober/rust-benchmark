@@ -76,7 +76,7 @@
 Add this to your `Cargo.toml`:
 ```toml
 [dependencies]
-benchmark = "0.7.2"
+benchmark = "0.8.0"
 ```
 
 <br>
@@ -97,7 +97,7 @@ Add this to your `Cargo.toml`:
 ```toml
 [dependencies]
 # Disable default features for true zero-overhead
-benchmark = { version = "0.7.2", default-features = false }
+benchmark = { version = "0.8.0", default-features = false }
 ```
 
 <br>
@@ -124,7 +124,7 @@ cargo add benchmark --no-default-features
 - `collector` (default): `Collector`, `Stats`, and built-in histogram backend.
 - `metrics` (optional): production metrics (`Watch`, `Timer`, `stopwatch!`). Implies `collector`.
 - `high-precision` (optional): enables high-precision histogram backend. Implies `collector`.
-- `hdr` (optional): HDR histogram backend via optional `hdrhistogram` dependency. Requires `high-precision`.
+- `hdr` (optional): HDR histogram backend via optional `hdrhistogram` dependency. Requires `high-precision`. Initialization is non-panicking with a safe fallback in release builds.
 
 Notes:
 - `std` is internal and implied by the above features; you do not enable it directly.
@@ -438,7 +438,7 @@ Provides production-friendly timing and percentile statistics with negligible ov
 Installation with feature:
 ```toml
 [dependencies]
-benchmark = { version = "0.7.2", features = ["metrics"] }
+benchmark = { version = "0.8.0", features = ["metrics"] }
 ```
 
 ### Watch
