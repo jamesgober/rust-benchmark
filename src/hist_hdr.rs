@@ -95,7 +95,7 @@ impl Histogram {
     #[inline]
     /// Number of samples recorded.
     pub fn count(&self) -> u64 {
-        self.inner.read().map(|h| h.len()).unwrap_or(0)
+        self.inner.read().map_or(0, |h| h.len())
     }
 
     #[inline]
