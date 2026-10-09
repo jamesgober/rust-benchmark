@@ -407,7 +407,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          MSRV=1.75.0
+          # Keep in sync with rust-version in Cargo.toml
+          MSRV=1.70.0
           echo "Installing Rust $MSRV with retry..."
           for attempt in 1 2 3; do
             if rustup toolchain install "$MSRV" -c rustfmt -c clippy; then
@@ -425,6 +426,13 @@ jobs:
         
       - name: Regenerate Cargo.lock with MSRV
         run: cargo generate-lockfile
+
+      # Cargo before 1.84 resolves the newest versions regardless of rust-version.
+      # hdrhistogram 7.6.0 uses edition 2024 and needs Rust 1.88, so pin the last 7.5.x
+      # release for the MSRV check. The crate's `hdrhistogram = "7"` requirement
+      # still accepts 7.5.x.
+      - name: Pin MSRV-compatible hdrhistogram
+        run: cargo update -p hdrhistogram --precise 7.5.4
         
       - name: Check MSRV compatibility (lib only, no default features)
         run: cargo check --lib --no-default-features
