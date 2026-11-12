@@ -1,6 +1,6 @@
 # RUST LIBRARY DEVELOPMENT GUIDELINES
 
-> **CRITICAL**: This document defines the PRIMARY and REQUIRED rules for all Rust library development. These guidelines are designed to be both AI-friendly and human-readable. All code contributions MUST adhere to these principles.
+> **CRITICAL**: This document defines the PRIMARY and REQUIRED rules for all Rust library development. These guidelines are written to be easy to read and apply. All code contributions MUST adhere to these principles.
 
 ## ⚡ CORE PRINCIPLES (REQUIRED)
 
